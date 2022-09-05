@@ -36,6 +36,12 @@ def test_message():
                             {'from': accounts[i], "gas_price": "auto", 'value':5000000000000})
         print(f"minting transaction from {accounts[i]} to {accounts[i+1]}: ",tx.info())
         
+    for i,msg in enumerate(MESSAGES):
+        print(msg)
+        tx = message_contract.mint(bytes(msg,'utf-8'),0xffffffffffffff, accounts[i+1],
+                            {'from': accounts[i], "gas_price": "auto"})
+        print(f"minting transaction from {accounts[i]} to {accounts[i+1]}: ",tx.info())
+        
         
     for i in range(1,5):
         print(message_contract.getMessage(i))   
