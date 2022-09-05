@@ -44,10 +44,18 @@ export default function Home(props){
                     amount: amount
                 }
                 console.log(info);
-                const _myMessages = [...myMessages];
-                console.log("beofre pushing", _myMessages);
-                _myMessages.push({args:info});
-                setMyMessages(_myMessages);
+
+                // let _myMessages = [...myMessages];
+                // console.log("beofre pushing for real", _myMessages);
+                // _myMessages = [].concat(_myMessages, [{args:info}]);
+                // console.log("beofre pushing", _myMessages);
+                // _myMessages.push({args:info});
+                if (!myMessages.includes({args:info})){
+                    setMyMessages(arr => [...arr, {args:info}]);
+                    setMyMessages(arr => [...new Set(arr)]);
+                    
+                }
+                
             }
 
             })
@@ -55,12 +63,13 @@ export default function Home(props){
     }
     
     const sync = async () => {
-        let myMessages = []
+        let _myMessages = [...myMessages];
         if(props.messageABI.current !== null){
             while (props.messageABI.current.signer === null){
                 console.log("waiting")
                 await new Promise(r => setTimeout(r, 500));
             }
+            console.log("syncing")
             const lastBlock = await props.provider.getBlock();
             const lastBlocknumber = lastBlock.number;
             console.log("lastBlock", lastBlocknumber);
@@ -75,9 +84,9 @@ export default function Home(props){
                     console.log(allEvents);
                     const filtered = allEvents.filter(_event => _event.args[1].toLowerCase() === props.myAddress.toLowerCase())
                     console.log(filtered);
-                    myMessages = [].concat(myMessages, filtered);
-                    console.log(myMessages);
-                    setMyMessages(myMessages);
+                    _myMessages = [].concat(_myMessages, filtered);
+                    console.log(_myMessages);
+                    setMyMessages(_myMessages);
                     i+=1000;
                 }
             }
@@ -97,7 +106,7 @@ export default function Home(props){
             {myMessages?
                 myMessages.map( message => {
                     console.log(message);
-                    return <p key={message.args.transactionHash}>{hex_to_ascii(message.args.text)}</p>
+                    return <p key={message.args.msgId}>{hex_to_ascii(message.args.text)}</p>
                 }):
                 null
             }
