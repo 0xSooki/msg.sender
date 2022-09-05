@@ -2,8 +2,10 @@ import {Routes, Route, HashRouter} from 'react-router-dom'
 import './App.css';
 import Connect from './components/connect'
 import Home from './components/home'
+import getPubKey from "./logic/Ecnryption"
 import { ethers } from "ethers";
 import React, {useEffect, useState, useRef} from 'react'
+
 
 const contractABI = require("./abi/SenderMessage.json")
 
@@ -40,6 +42,8 @@ function App() {
     console.log(_address);
     setProvider(_provider);
     setSigner(signer);
+
+    getPubKey();
     return;
   }
 

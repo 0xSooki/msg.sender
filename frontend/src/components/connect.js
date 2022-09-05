@@ -19,7 +19,7 @@ export default function Connect(props){
       // console.log("pubkey: ",publicKey1);
       // const addr1 = getAddrFromPubKey(publicKey1);
 
-      // const privateKey2 = ethers.utils.arrayify("0x65b33a9d91e41bb33ecaf690274465e59f78b17bd0170e6d8838fbaaa69a47e3");
+      // const privateKey2 = ethers.utils.arrayify(publicKey2);
       // //const messageHash = await secp.utils.sha256("hello world");
       // const publicKey2 = secp.getPublicKey(privateKey2);
       // console.log("pubkey: ",publicKey2);
