@@ -32,6 +32,7 @@ export default function Home(props){
                 console.log("waiting")
                 await new Promise(r => setTimeout(r, 500));
             }
+            props.messageABI.current.removeAllListeners();
             props.messageABI.current.on("NewMessage", (from, to, msgId, text, pubkey, amount) =>{
                 if (to.toLowerCase() === props.myAddress.toLowerCase()){
                 
@@ -53,7 +54,7 @@ export default function Home(props){
                 if (!myMessages.includes({args:info})){
                     setMyMessages(arr => [...arr, {args:info}]);
                     setMyMessages(arr => [...new Set(arr)]);
-                    
+                    return;
                 }
                 
             }
@@ -63,12 +64,13 @@ export default function Home(props){
     }
     
     const sync = async () => {
-        let _myMessages = [...myMessages];
+        let _myMessages = [];
         if(props.messageABI.current !== null){
             while (props.messageABI.current.signer === null){
                 console.log("waiting")
                 await new Promise(r => setTimeout(r, 500));
             }
+            props.messageABI.current.removeAllListeners();
             console.log("syncing")
             const lastBlock = await props.provider.getBlock();
             const lastBlocknumber = lastBlock.number;
