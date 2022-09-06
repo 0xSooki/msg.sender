@@ -7,6 +7,10 @@ import { TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
+import * as secp from '@noble/secp256k1';
+
+
+//const crypto = require('webcrypto');
 
 export default function SendMessage(props){
 
@@ -52,6 +56,14 @@ export default function SendMessage(props){
         //setRecoveredBobsAddress(recoveredAddress);
         //const compressed = recoveredPubKey
     }
+
+    // const getSharedKey = () => {
+    //     //this is for testing purposes. We create a randome priv key.
+    //     const key1 = crypto.createECDH('secp256k1');
+    //     key1.computeSecret(bobsPubKey, null,'base64');
+
+    //     secp.getSharedSecret()
+    // }
 
     const handleAddress = async(event) => {
         setBobsAddress(event.target.value);
