@@ -2,7 +2,7 @@ import {Routes, Route, HashRouter} from 'react-router-dom'
 import './App.css';
 import Connect from './components/connect'
 import Home from './components/home'
-import getPubKey from "./logic/Ecnryption"
+import SendMessage from "./components/SendMessage"
 import { ethers } from "ethers";
 import React, {useEffect, useState, useRef} from 'react'
 
@@ -42,8 +42,6 @@ function App() {
     console.log(_address);
     setProvider(_provider);
     setSigner(signer);
-
-    getPubKey();
     return;
   }
 
@@ -58,6 +56,12 @@ function App() {
                     <Home signer={ signer } messageABI={ messageABI } myAddress={myAddress}
                           provider={provider}
                           contractAddress={"0x11692A334351d4Be544Dc106B2447EBEdaac4A39"}
+                        /> }
+                    />
+          <Route exact path="/send-message" 
+                 element={ 
+                    <SendMessage signer={ signer }
+                          provider={provider}
                         /> }
                     />
           <Route path="/connect"  element={<Connect connectWallet={connectWallet}/>} />
