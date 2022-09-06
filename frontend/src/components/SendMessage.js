@@ -6,6 +6,7 @@ import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
+import { ethers } from "ethers";
 
 export default function SendMessage(props){
 
@@ -32,7 +33,24 @@ export default function SendMessage(props){
         const recoveredPubKey = await getPubKey(lastBlocknumber, bobsAddress);
         //const recoveredAddress = res[1]
         setBobsPubKey(recoveredPubKey);
+        console.log(recoveredPubKey)
+        console.log("type ",typeof recoveredPubKey)
+        const x =  BigInt("0x" + recoveredPubKey.slice(4,68));
+        const y = BigInt("0x" + recoveredPubKey.slice(68));
+        console.log("x",x.toString(16),"y",y.toString(16));
+        let compressed = "";
+        if(y%2n === 0n){
+            compressed = "0x02" + x.toString(16)
+        }else{
+            compressed = "0x03" + x.toString(16);
+        }
+        setBobsPubKey(compressed) 
+        console.log("before computing", compressed) 
+        const addr2 = await ethers.utils.computeAddress(compressed)
+        console.log("addr2",addr2);
+
         //setRecoveredBobsAddress(recoveredAddress);
+        //const compressed = recoveredPubKey
     }
 
     const handleAddress = async(event) => {
