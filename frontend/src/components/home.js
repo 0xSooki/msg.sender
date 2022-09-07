@@ -71,20 +71,22 @@ export default function Home(props) {
       const lastBlock = await props.provider.getBlock();
       const lastBlocknumber = lastBlock.number;
       console.log("lastBlock", lastBlocknumber);
-      let i = CONTRACT_CREATION_BLOCK;
-      while (i < lastBlocknumber) {
+      let i = lastBlocknumber;
+      while (i > CONTRACT_CREATION_BLOCK) {
         if (props.messageABI.current.signer !== null) {
-          let end = i + 1000;
-          if (i + 1000 > lastBlocknumber) {
-            end = lastBlocknumber;
+          let end = i - 1000;
+          if (i - 1000 < CONTRACT_CREATION_BLOCK) {
+            end = CONTRACT_CREATION_BLOCK;
           }
           const allEvents = await props.messageABI.current.queryFilter(
             "NewMessage",
-            i,
-            end
+            end,
+            i
           );
           console.log(allEvents);
-          const filtered = allEvents.filter(
+          let sortedPosts = [...allEvents];
+          sortedPosts.reverse();
+          const filtered = sortedPosts.filter(
             (_event) =>
               _event.args[1].toLowerCase() === props.myAddress.toLowerCase()
           );
@@ -92,7 +94,7 @@ export default function Home(props) {
           _myMessages = [].concat(_myMessages, filtered);
           console.log(_myMessages);
           setMyMessages(_myMessages);
-          i += 1000;
+          i -= 1000;
         }
       }
       return;

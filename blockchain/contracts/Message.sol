@@ -7,7 +7,8 @@ contract SenderMessage is  Ownable{
 
     struct Message {
         bytes cipherText;
-        uint ephempubkey;
+        uint pubkeyX;
+        bool pubkeyYodd;
         address to;
         address from;
         uint value;
