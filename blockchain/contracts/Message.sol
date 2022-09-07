@@ -9,6 +9,7 @@ contract SenderMessage is  Ownable{
         bytes cipherText;
         uint pubkeyX;
         bool pubkeyYodd;
+        uint128 iv;
         address to;
         address from;
         uint value;

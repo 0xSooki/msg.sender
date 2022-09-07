@@ -8,6 +8,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
 import PrivKeyInput from './PrivKeyInput';
+import stream from "stream";
 
 import * as secp from '@noble/secp256k1';
 
@@ -18,11 +19,13 @@ export default function SendMessage(props){
     window.Buffer = window.Buffer || require("buffer").Buffer;
 
     const navigate = useNavigate();
-    const [myMessages, setMyMessages] = useState([])
+    const [myMessage, setMyMessage] = useState([])
     const [bobsAddress, setBobsAddress] = useState("")
     const [bobsPubKey, setBobsPubKey] = useState("")
     const [recoveredBobsAddress, setRecoveredBobsAddress] = useState("")
-    const [secret, setSecret] = useState();
+    const [secret, setSecret] = useState("");
+    const [iv, setIV] = useState([]);
+    const [cipherText, setCipherText] = useState("");
 
 
     useEffect(( ) => {
@@ -36,31 +39,50 @@ export default function SendMessage(props){
     },[ props.provider]);
 
     const handleMessage = (event) => {
-        setMyMessages(event.target.value);
+        setMyMessage(event.target.value);
     }
 
     const sendMessage = async () => {
         if (!bobsPubKey){
             await getBobsPubKey();
         }
-        computeSecret();
-        computeSecret();
+        //computeSecret();
+        const _secret = computeSecret();
+        encryptMessage(_secret);
     }
 
     const computeSecret = () => {
         if(bobsPubKey && props.privKey.length>0){
             const key = crypto.createECDH('secp256k1')
             key.setPrivateKey(props.privKey);
-            const secret = key.computeSecret(ethers.utils.arrayify(bobsPubKey), null)
-            console.log(secret);
-            setSecret(secret);
+            const _secret = key.computeSecret(ethers.utils.arrayify(bobsPubKey), null)
+            console.log(_secret);
+            setSecret(_secret);
+            return _secret;
         }else{
             console.log("there is no pubkey or privkey")
             console.log("props.privKey",props.privKey)
             console.log("bobsPubKey",bobsPubKey)
-            
             return false;
         }
+    }
+
+    const encryptMessage = async (_secret) => {
+        const iv = crypto.randomBytes(16);
+        setIV(iv);
+        console.log(iv);
+        console.log("before ecnrypting. Secret: ", _secret);
+        console.log(typeof _secret);
+        const cipher = crypto.createCipheriv(
+            'aes-256-cbc', _secret, iv);
+        console.log("cipher", cipher);
+        const encrypted = cipher.update(myMessage);
+        console.log("encrypted", encrypted);
+        const _cipherText = Buffer.concat([encrypted, cipher.final()]);
+        console.log("_cipherText", _cipherText)
+        setCipherText(_cipherText);
+        console.log("end");
+ 
     }
 
     const getBobsPubKey = async(event) => {
@@ -137,7 +159,7 @@ export default function SendMessage(props){
             id="message"
             type="text"
             label="Your message"
-            value={myMessages} onChange={handleMessage}
+            value={myMessage} onChange={handleMessage}
             InputProps={{
             startAdornment: (
                 <InputAdornment position="start">
