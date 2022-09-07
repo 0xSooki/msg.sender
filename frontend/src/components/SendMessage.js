@@ -80,7 +80,7 @@ export default function SendMessage(props){
         }else{
             compressed = "0x03" + x.toString(16);
         }
-        //setBobsPubKey(compressed) 
+        setBobsPubKey(compressed) 
         console.log("before computing", compressed) 
         const addr2 = await ethers.utils.computeAddress(compressed)
         console.log("addr2",addr2);
