@@ -7,18 +7,22 @@ import { TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
+import PrivKeyInput from './PrivKeyInput';
+
 import * as secp from '@noble/secp256k1';
 
 
 const crypto = require('crypto-browserify');
 
 export default function SendMessage(props){
+    window.Buffer = window.Buffer || require("buffer").Buffer;
 
     const navigate = useNavigate();
     const [myMessages, setMyMessages] = useState([])
     const [bobsAddress, setBobsAddress] = useState("")
     const [bobsPubKey, setBobsPubKey] = useState("")
     const [recoveredBobsAddress, setRecoveredBobsAddress] = useState("")
+    const [secret, setSecret] = useState();
 
 
     useEffect(( ) => {
@@ -30,6 +34,34 @@ export default function SendMessage(props){
         }
         checkState();
     },[ props.provider]);
+
+    const handleMessage = (event) => {
+        setMyMessages(event.target.value);
+    }
+
+    const sendMessage = async () => {
+        if (!bobsPubKey){
+            await getBobsPubKey();
+        }
+        computeSecret();
+        computeSecret();
+    }
+
+    const computeSecret = () => {
+        if(bobsPubKey && props.privKey.length>0){
+            const key = crypto.createECDH('secp256k1')
+            key.setPrivateKey(props.privKey);
+            const secret = key.computeSecret(ethers.utils.arrayify(bobsPubKey), null)
+            console.log(secret);
+            setSecret(secret);
+        }else{
+            console.log("there is no pubkey or privkey")
+            console.log("props.privKey",props.privKey)
+            console.log("bobsPubKey",bobsPubKey)
+            
+            return false;
+        }
+    }
 
     const getBobsPubKey = async(event) => {
         const lastBlock = await props.provider.getBlock();
@@ -48,21 +80,14 @@ export default function SendMessage(props){
         }else{
             compressed = "0x03" + x.toString(16);
         }
-        setBobsPubKey(compressed) 
+        //setBobsPubKey(compressed) 
         console.log("before computing", compressed) 
         const addr2 = await ethers.utils.computeAddress(compressed)
         console.log("addr2",addr2);
 
         setRecoveredBobsAddress(addr2);
+        return;
     }
-
-    // const getSharedKey = () => {
-    //     //this is for testing purposes. We create a randome priv key.
-    //     const key1 = crypto.createECDH('secp256k1');
-    //     key1.computeSecret(bobsPubKey, null,'base64');
-
-    //     secp.getSharedSecret()
-    // }
 
     const handleAddress = async(event) => {
         setBobsAddress(event.target.value);
@@ -71,6 +96,7 @@ export default function SendMessage(props){
     return (
 
       <div style={{height:"100vh",textAlign:"center",display:"block"}}>
+        
       <TextField
                 sx={{ marginLeft: 'auto',
                     marginRight: 'auto',
@@ -101,6 +127,39 @@ export default function SendMessage(props){
             <h4>{bobsPubKey}</h4>:null}
             {recoveredBobsAddress?
             <h4>{recoveredBobsAddress}</h4>:null}
+            {secret?
+            <h4>{secret}</h4>:null}
+            
+        <TextField
+            sx={{ marginLeft: 'auto',
+                marginRight: 'auto',
+                width: 600}}
+            id="message"
+            type="text"
+            label="Your message"
+            value={myMessages} onChange={handleMessage}
+            InputProps={{
+            startAdornment: (
+                <InputAdornment position="start">
+                <ChatIcon />
+                </InputAdornment>
+            ),
+            }}
+            variant="standard"
+            />
+        <Button variant="contained" color="success" sx ={{
+            marginLeft:"auto",
+             marginRight:"auto",
+             marginTop:"auto",
+             marginBottom:"auto",
+            }} onClick={sendMessage}
+            >
+            SEND MESSAGE
+            </Button>
+            {props.privKey.length>0?
+            null:
+            <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+            }
     </div>
         
     )

@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "buffer": "^6.0.3",
-    "stream": "^0.0.2"
-  }
-}

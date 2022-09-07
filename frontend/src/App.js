@@ -15,6 +15,7 @@ function App() {
   );
   const [signer, setSigner] = useState(null);
   const [myAddress, setMyAddress] = useState("");
+  const [privKey, setPrivateKey] = useState([]);
   const messageABI = useRef(null);
 
   useEffect(() => {
@@ -50,14 +51,14 @@ function App() {
           <Route exact path="/" 
                  element={ 
                     <Home signer={ signer } messageABI={ messageABI } myAddress={myAddress}
-                          provider={provider}
+                          provider={provider} 
                           contractAddress={"0x11692A334351d4Be544Dc106B2447EBEdaac4A39"}
                         /> }
                     />
           <Route exact path="/send-message" 
                  element={ 
-                    <SendMessage signer={ signer }
-                          provider={provider}
+                    <SendMessage signer={ signer } setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
+                    privKey={privKey} provider={provider}
                         /> }
                     />
           <Route path="/connect"  element={<Connect connectWallet={connectWallet}/>} />
