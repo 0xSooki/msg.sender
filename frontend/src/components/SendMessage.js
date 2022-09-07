@@ -10,7 +10,7 @@ import { ethers } from "ethers";
 import * as secp from '@noble/secp256k1';
 
 
-//const crypto = require('webcrypto');
+const crypto = require('crypto-browserify');
 
 export default function SendMessage(props){
 
@@ -53,8 +53,7 @@ export default function SendMessage(props){
         const addr2 = await ethers.utils.computeAddress(compressed)
         console.log("addr2",addr2);
 
-        //setRecoveredBobsAddress(recoveredAddress);
-        //const compressed = recoveredPubKey
+        setRecoveredBobsAddress(addr2);
     }
 
     // const getSharedKey = () => {
