@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import {useNavigate} from 'react-router-dom'
-import hex_to_ascii from "../logic/helpers"
 import {getPubKey} from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
@@ -8,9 +7,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
 import PrivKeyInput from './PrivKeyInput';
-import stream from "stream";
-
-import * as secp from '@noble/secp256k1';
 
 
 const crypto = require('crypto-browserify');

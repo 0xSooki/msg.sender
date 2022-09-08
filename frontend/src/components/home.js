@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
-import  {decrypt, getPubKey}  from "../logic/Ecnryption"
+import  {decrypt}  from "../logic/Ecnryption"
 
 
 const CONTRACT_CREATION_BLOCK = 27986896;
@@ -12,9 +12,6 @@ const crypto = require('crypto-browserify');
 export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
-  const [iv, setIV] = useState([]);
-  const [cipherText, setCipherText] = useState("");
-  const [aliceAddress, setAliceAddress] = useState("")
 
   useEffect(() => {
     async function checkState() {
@@ -28,6 +25,7 @@ export default function Home(props) {
     sync();
     startListening();
   }, [props.messageABI.current, props.signer]);
+
 
   const decryptMsg = (cipherText, alicePubKeyX, alicePibKeyYodd, _iv) => {
     let alicePubKey ="";
@@ -66,12 +64,6 @@ export default function Home(props) {
               amount: amount,
             };
             console.log(info);
-
-            // let _myMessages = [...myMessages];
-            // console.log("beofre pushing for real", _myMessages);
-            // _myMessages = [].concat(_myMessages, [{args:info}]);
-            // console.log("beofre pushing", _myMessages);
-            // _myMessages.push({args:info});
             if (!myMessages.includes({ args: info })) {
               setMyMessages((arr) => [...arr, { args: info }]);
               setMyMessages((arr) => [...new Set(arr)]);

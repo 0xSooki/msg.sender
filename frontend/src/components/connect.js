@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ethers } from "ethers";
 import PrivKeyInput from './PrivKeyInput';
 //const Buffer = require('buffer/').Buffer
 //const crypto = require('crypto');
