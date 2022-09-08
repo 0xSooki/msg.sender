@@ -1,24 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import {useNavigate} from 'react-router-dom'
-import hex_to_ascii from "../logic/helpers"
-import getPubKey from "../logic/Ecnryption"
+import {getPubKey} from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
-import * as secp from '@noble/secp256k1';
+import PrivKeyInput from './PrivKeyInput';
 
 
 const crypto = require('crypto-browserify');
 
 export default function SendMessage(props){
+    window.Buffer = window.Buffer || require("buffer").Buffer;
 
     const navigate = useNavigate();
-    const [myMessages, setMyMessages] = useState([])
+    const [myMessage, setMyMessage] = useState([])
     const [bobsAddress, setBobsAddress] = useState("")
     const [bobsPubKey, setBobsPubKey] = useState("")
     const [recoveredBobsAddress, setRecoveredBobsAddress] = useState("")
+    const [secret, setSecret] = useState("");
+    const [iv, setIV] = useState([]);
+    const [cipherText, setCipherText] = useState("");
 
 
     useEffect(( ) => {
@@ -30,6 +33,76 @@ export default function SendMessage(props){
         }
         checkState();
     },[ props.provider]);
+
+    const handleMessage = (event) => {
+        setMyMessage(event.target.value);
+    }
+
+    const sendMessage = async () => {
+        if (!bobsPubKey){
+            await getBobsPubKey();
+        }
+        //computeSecret();
+        const _secret = computeSecret();
+        encryptMessage(_secret);
+        const key = crypto.createECDH('secp256k1')
+        key.setPrivateKey(props.privKey);
+        const myPubKey =key.getPublicKey('hex', 'compressed');
+        console.log("myPubKey", myPubKey);
+        let odd = false;
+        if (myPubKey.slice(0,2) === "03"){
+            odd = true;
+        }
+        const x = BigInt("0x"+myPubKey.slice(2));
+        console.log(x)
+        //for now, we are only sending messages as events. (..., 1) 
+        props.messageABI.current.sendCipherText(cipherText,x, odd, iv, bobsAddress, 1)
+        .then(async (_txHash) => {
+            console.log(_txHash);
+            _txHash.wait().then(receipt => {
+                setMyMessage("");
+                setBobsAddress("");
+                console.log("tx mined: ", receipt);               
+            } )
+            .catch((error) => {
+            console.log(error);
+            });
+        });
+    }
+
+    const computeSecret = () => {
+        if(bobsPubKey && props.privKey.length>0){
+            const key = crypto.createECDH('secp256k1')
+            key.setPrivateKey(props.privKey);
+            const _secret = key.computeSecret(ethers.utils.arrayify(bobsPubKey), null)
+            console.log(_secret);
+            setSecret(_secret);
+            return _secret;
+        }else{
+            console.log("there is no pubkey or privkey")
+            console.log("props.privKey",props.privKey)
+            console.log("bobsPubKey",bobsPubKey)
+            return false;
+        }
+    }
+
+    const encryptMessage = async (_secret) => {
+        const iv = crypto.randomBytes(16);
+        setIV(iv);
+        console.log(iv);
+        console.log("before ecnrypting. Secret: ", _secret);
+        console.log(typeof _secret);
+        const cipher = crypto.createCipheriv(
+            'aes-256-cbc', _secret, iv);
+        console.log("cipher", cipher);
+        const encrypted = cipher.update(myMessage);
+        console.log("encrypted", encrypted);
+        const _cipherText = Buffer.concat([encrypted, cipher.final()]);
+        console.log("_cipherText", _cipherText)
+        setCipherText(_cipherText);
+        console.log("end");
+ 
+    }
 
     const getBobsPubKey = async(event) => {
         const lastBlock = await props.provider.getBlock();
@@ -54,15 +127,8 @@ export default function SendMessage(props){
         console.log("addr2",addr2);
 
         setRecoveredBobsAddress(addr2);
+        return;
     }
-
-    // const getSharedKey = () => {
-    //     //this is for testing purposes. We create a randome priv key.
-    //     const key1 = crypto.createECDH('secp256k1');
-    //     key1.computeSecret(bobsPubKey, null,'base64');
-
-    //     secp.getSharedSecret()
-    // }
 
     const handleAddress = async(event) => {
         setBobsAddress(event.target.value);
@@ -71,6 +137,7 @@ export default function SendMessage(props){
     return (
 
       <div style={{height:"100vh",textAlign:"center",display:"block"}}>
+        
       <TextField
                 sx={{ marginLeft: 'auto',
                     marginRight: 'auto',
@@ -101,6 +168,43 @@ export default function SendMessage(props){
             <h4>{bobsPubKey}</h4>:null}
             {recoveredBobsAddress?
             <h4>{recoveredBobsAddress}</h4>:null}
+            {secret?
+            <h4>{secret}</h4>:null}
+            
+        <TextField
+            sx={{ marginLeft: 'auto',
+                marginRight: 'auto',
+                width: 600}}
+            id="message"
+            type="text"
+            label="Your message"
+            value={myMessage} onChange={handleMessage}
+            InputProps={{
+            startAdornment: (
+                <InputAdornment position="start">
+                <ChatIcon />
+                </InputAdornment>
+            ),
+            }}
+            variant="standard"
+            />
+        <Button variant="contained" color="success" sx ={{
+            marginLeft:"auto",
+             marginRight:"auto",
+             marginTop:"auto",
+             marginBottom:"auto",
+            }} onClick={sendMessage}
+            >
+            SEND MESSAGE
+            </Button>
+            {props.privKey.length>0?
+            null:
+            <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+            }
+            {iv?
+            <h4>{iv.toString('hex')}</h4>:null}
+            {cipherText?
+            <h4>{cipherText.toString('hex')}</h4>:null}
     </div>
         
     )

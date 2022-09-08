@@ -2,14 +2,20 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
+import PrivKeyInput from './PrivKeyInput';
+import  {decrypt}  from "../logic/Ecnryption"
+import Button from '@mui/material/Button';
 
-const CONTRACT_CREATION_BLOCK = 27933806;
+
+const CONTRACT_CREATION_BLOCK = 27986896;
+const crypto = require('crypto-browserify');
 
 export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
 
   useEffect(() => {
+    const abortController = new AbortController()
     async function checkState() {
       //await new Promise(r => setTimeout(r, 500));
       if (props.signer === null) {
@@ -18,9 +24,30 @@ export default function Home(props) {
     }
     checkState();
 
-    sync();
+    //sync();
     startListening();
+    return function cleanup(){
+      abortController.abort()
+    }
   }, [props.messageABI.current, props.signer]);
+
+
+  const decryptMsg = (cipherText, alicePubKeyX, alicePibKeyYodd, _iv) => {
+    let alicePubKey ="";
+    if (alicePibKeyYodd){
+      alicePubKey = "0x03" + alicePubKeyX.toHexString().slice(2);
+    }else{
+      alicePubKey = "0x02" + alicePubKeyX.toHexString().slice(2);
+    }
+    console.log(alicePubKey);
+    console.log(_iv)
+    const key = crypto.createECDH('secp256k1')
+    key.setPrivateKey(props.privKey);
+    const _secret = key.computeSecret(ethers.utils.arrayify(alicePubKey), null)
+    const message = decrypt(ethers.utils.arrayify(cipherText), _secret, ethers.utils.arrayify(_iv));
+    console.log(message);
+    return message;
+  }
 
   const startListening = async () => {
     if (props.messageABI.current !== null) {
@@ -42,12 +69,6 @@ export default function Home(props) {
               amount: amount,
             };
             console.log(info);
-
-            // let _myMessages = [...myMessages];
-            // console.log("beofre pushing for real", _myMessages);
-            // _myMessages = [].concat(_myMessages, [{args:info}]);
-            // console.log("beofre pushing", _myMessages);
-            // _myMessages.push({args:info});
             if (!myMessages.includes({ args: info })) {
               setMyMessages((arr) => [...arr, { args: info }]);
               setMyMessages((arr) => [...new Set(arr)]);
@@ -103,20 +124,56 @@ export default function Home(props) {
 
   console.log(props.signer);
   return (
+    <div display="block">
     <div className="flex justify-center">
+      
       <h1 className="font-bold text-2xl">This is Home</h1>
       <ul>
         {myMessages
           ? myMessages.map((message) => {
               console.log(message);
-              return (
-                <p key={message.args.msgId}>
-                  {hex_to_ascii(message.args.text)}
-                </p>
-              );
-            })
-          : null}
+              //If the message is encrypted...
+              if(message.args.pubkeyX._hex.length>4 && message.args.iv._hex.length>4){
+                //if we have the private key to decipher it.
+                if(props.privKey.length>0){
+                  return (
+                    <p key={message.args.msgId}>
+                      {decryptMsg(message.args.cipherText,message.args.pubkeyX,
+                                               message.args.pubkeyYodd, message.args.iv._hex )}
+                    </p>
+                      )
+                  }else{
+                    //if not..
+                    return(<p>Encrypted message. Decrypt with your private key.</p>)
+                    
+                }
+              }else{
+                //If the message is not encrypted
+                return (
+                  <p key={message.args.msgId}>
+                    {hex_to_ascii(message.args.cipherText)}
+                  </p>)
+              }
+            }
+          )
+          :<p>No Messages</p> 
+          }
       </ul>
+    </div>
+    <div>
+    <Button variant="contained" color="success" sx ={{
+            marginLeft:"auto",
+             marginRight:"auto",
+             marginTop:"auto",
+             marginBottom:"auto",
+            }} onClick={sync}
+            >
+            Sync past messages
+            </Button>
+
+    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+
+    </div>
     </div>
   );
 }

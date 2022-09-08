@@ -15,12 +15,13 @@ function App() {
   );
   const [signer, setSigner] = useState(null);
   const [myAddress, setMyAddress] = useState("");
+  const [privKey, setPrivateKey] = useState([]);
   const messageABI = useRef(null);
 
   useEffect(() => {
     const initContracts = async () => {
       messageABI.current = new ethers.Contract(
-        "0x11692A334351d4Be544Dc106B2447EBEdaac4A39",
+        "0x270b80292699c68D060F5ffECCC099B78465a3F3",
         contractABI.abi,
         signer
       );
@@ -50,17 +51,21 @@ function App() {
           <Route exact path="/" 
                  element={ 
                     <Home signer={ signer } messageABI={ messageABI } myAddress={myAddress}
-                          provider={provider}
-                          contractAddress={"0x11692A334351d4Be544Dc106B2447EBEdaac4A39"}
+                          provider={provider} privKey={privKey} 
+                          setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
+                          contractAddress={"0x270b80292699c68D060F5ffECCC099B78465a3F3"}
                         /> }
                     />
           <Route exact path="/send-message" 
                  element={ 
-                    <SendMessage signer={ signer }
-                          provider={provider}
+                    <SendMessage signer={ signer } setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
+                    privKey={privKey} provider={provider} messageABI={ messageABI }
                         /> }
                     />
-          <Route path="/connect"  element={<Connect connectWallet={connectWallet}/>} />
+          <Route path="/connect"  element={
+                    <Connect 
+                    setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
+                    connectWallet={connectWallet}/>} />
         </Routes>
       </HashRouter>
     </div>
