@@ -5,7 +5,7 @@ def main():
     print(acct)
     
     contract = SenderMessage.deploy(
-         {'from': acct, "gas_price": "auto"}, publish_source=True)
+         {'from': acct, "gas_price": "auto"}, publish_source=False)
 
 # brownie run deploy_message.py --network polygon-test
 

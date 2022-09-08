@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {useNavigate} from 'react-router-dom'
 import hex_to_ascii from "../logic/helpers"
-import getPubKey from "../logic/Ecnryption"
+import {getPubKey} from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -49,6 +49,29 @@ export default function SendMessage(props){
         //computeSecret();
         const _secret = computeSecret();
         encryptMessage(_secret);
+        const key = crypto.createECDH('secp256k1')
+        key.setPrivateKey(props.privKey);
+        const myPubKey =key.getPublicKey('hex', 'compressed');
+        console.log("myPubKey", myPubKey);
+        let odd = false;
+        if (myPubKey.slice(0,2) === "03"){
+            odd = true;
+        }
+        const x = BigInt("0x"+myPubKey.slice(2));
+        console.log(x)
+        //for now, we are only sending messages as events. (..., 1) 
+        props.messageABI.current.sendCipherText(cipherText,x, odd, iv, bobsAddress, 1)
+        .then(async (_txHash) => {
+            console.log(_txHash);
+            _txHash.wait().then(receipt => {
+                setMyMessage("");
+                setBobsAddress("");
+                console.log("tx mined: ", receipt);               
+            } )
+            .catch((error) => {
+            console.log(error);
+            });
+        });
     }
 
     const computeSecret = () => {

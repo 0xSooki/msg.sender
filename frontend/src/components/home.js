@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
-import {decrypt, getPubKey} from "../logic/Ecnryption"
+import  {decrypt, getPubKey}  from "../logic/Ecnryption"
 
 
-const CONTRACT_CREATION_BLOCK = 27933806;
+const CONTRACT_CREATION_BLOCK = 27986896;
 
 export default function Home(props) {
   const navigate = useNavigate();
@@ -155,37 +155,6 @@ export default function Home(props) {
     </div>
     <div>
 
-    <TextField
-        sx={{ marginLeft: 'auto',
-            marginRight: 'auto',
-            width: 600}}
-        id="aliceAddress"
-        type="text"
-        label="Alice Address"
-        value={aliceAddress} onChange={handleAliceAddress}
-        variant="standard"
-    />
-
-    <TextField
-        sx={{ marginLeft: 'auto',
-            marginRight: 'auto',
-            width: 600}}
-        id="iv"
-        type="text"
-        label="IV"
-        value={iv} onChange={handleIV}
-        variant="standard"
-    />
-      <TextField
-        sx={{ marginLeft: 'auto',
-            marginRight: 'auto',
-            width: 600}}
-        id="cipherText"
-        type="text"
-        label="CipherText"
-        value={cipherText} onChange={handleCipherText}
-        variant="standard"
-    />
 
     <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
 

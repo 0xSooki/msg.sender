@@ -19,26 +19,27 @@ def test_message():
     message_contract = SenderMessage.deploy(
             {'from': accounts[0], "gas_price": "auto"})
 
-    tx = message_contract.mint(bytes(MESSAGES[0],'utf-8'),0xffffffffffffff, accounts[1],
+    #bytes memory cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, address to, uint8 eventSavedOrNft
+    tx = message_contract.sendCipherText(bytes(MESSAGES[0],'utf-8'),0xffffffffffffff, False, 0xff, accounts[1], 1,
                             {'from': accounts[0], "gas_price": "auto", 'value':5000000000000})
     print(f"minting transaction from {accounts[0]} to {accounts[1]}: ",tx.info())
 
 
     for i,msg in enumerate(MESSAGES):
         print(msg)
-        tx = message_contract.mint(bytes(msg,'utf-8'),0xffffffffffffff, accounts[i+1],
+        tx = message_contract.sendCipherText(bytes(MESSAGES[0],'utf-8'),0xffffffffffffff, False, 0xff, accounts[i+1], 2,
                             {'from': accounts[i], "gas_price": "auto", 'value':5000000000000})
         print(f"minting transaction from {accounts[i]} to {accounts[i+1]}: ",tx.info())
 
     for i,msg in enumerate(MESSAGES):
         print(msg)
-        tx = message_contract.mint(bytes(msg,'utf-8'),0xffffffffffffff, accounts[i+1],
+        tx = message_contract.sendCipherText(bytes(msg,'utf-8'),0xffffffffffffff, False, 0xff, accounts[i+1], 3,
                             {'from': accounts[i], "gas_price": "auto", 'value':5000000000000})
         print(f"minting transaction from {accounts[i]} to {accounts[i+1]}: ",tx.info())
         
     for i,msg in enumerate(MESSAGES):
         print(msg)
-        tx = message_contract.mint(bytes(msg,'utf-8'),0xffffffffffffff, accounts[i+1],
+        tx = message_contract.sendCipherText(bytes(msg,'utf-8'),0xffffffffffffff, False, 0xff, accounts[i+1], 3,
                             {'from': accounts[i], "gas_price": "auto"})
         print(f"minting transaction from {accounts[i]} to {accounts[i+1]}: ",tx.info())
         
