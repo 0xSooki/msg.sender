@@ -182,6 +182,10 @@ export default function SendMessage(props){
             null:
             <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
             }
+            {iv?
+            <h4>{iv.toString('hex')}</h4>:null}
+            {cipherText?
+            <h4>{cipherText.toString('hex')}</h4>:null}
     </div>
         
     )

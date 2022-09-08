@@ -1,6 +1,8 @@
 const ethers = require("ethers")
 const polygonscan = require("polygonscan-api").init(process.env.POLYGONSCAN_TOKEN, 'mumbai', '3000');
 
+const crypto = require('crypto-browserify');
+
 const pk =
  "0x0471c746523d16e93d4738f882d9b0beebf66c68caa0f895db15686b57b878cfc7b3e09813ba94f1bbfaa91a06566d3d18bbf69d10bcc947325bbcd6fea97ed692"
 const ad = "0x36D52654f24f3728a295676acf1b421295fdab4D"
@@ -86,5 +88,22 @@ const getATxFromAddress = async(last_block, addr) =>{
 
 }
 
-export default (getPubKey);
+const decrypt = (cipherText, secret, iv) => {
+    const decrypter = crypto.createDecipheriv("aes-256-cbc", secret, iv);
+
+    // decrypt the message
+    // set the input encoding
+    // and the output encoding
+    let decryptedMsg = decrypter.update(cipherText, "hex", "utf8");
+
+    // stop the decryption using
+    // the final method and set
+    // output encoding to utf8
+    decryptedMsg += decrypter.final("utf8");
+
+    console.log("Decrypted message: " + decryptedMsg);
+    return decryptedMsg;
+    }
+
+export default (getPubKey, decrypt);
 

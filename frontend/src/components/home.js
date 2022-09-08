@@ -2,12 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
+import PrivKeyInput from './PrivKeyInput';
+import {decrypt, getPubKey} from "../logic/Ecnryption"
+
 
 const CONTRACT_CREATION_BLOCK = 27933806;
 
 export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
+  const [iv, setIV] = useState([]);
+  const [cipherText, setCipherText] = useState("");
+  const [aliceAddress, setAliceAddress] = useState("")
 
   useEffect(() => {
     async function checkState() {
@@ -21,6 +27,33 @@ export default function Home(props) {
     sync();
     startListening();
   }, [props.messageABI.current, props.signer]);
+
+  const handleCipherText = (event) =>{
+    setCipherText(event.target.value);
+  }
+
+  const handleIV = (event) =>{
+    setIV(event.target.value);
+  }
+  
+  const handleAliceAddress = (event) => {
+    setAliceAddress(event.target.value)
+  }
+
+  const decryptMsg = (alicePibKeyX, alicePibKeyYodd, _iv) => {
+    let alicePubKey ="";
+    if (alicePibKeyYodd){
+      alicePubKey = "0x03" + alicePibKeyX;
+    }else{
+      alicePubKey = "0x02" + alicePibKeyX;
+    }
+    const key = crypto.createECDH('secp256k1')
+    key.setPrivateKey(props.privKey);
+    const _secret = key.computeSecret(ethers.utils.arrayify(alicePubKey), null)
+    const message = decrypt(cipherText, _secret, iv);
+    console.log(message);
+    return message;
+  }
 
   const startListening = async () => {
     if (props.messageABI.current !== null) {
@@ -103,7 +136,9 @@ export default function Home(props) {
 
   console.log(props.signer);
   return (
+    <div display="block">
     <div className="flex justify-center">
+      
       <h1 className="font-bold text-2xl">This is Home</h1>
       <ul>
         {myMessages
@@ -117,6 +152,44 @@ export default function Home(props) {
             })
           : null}
       </ul>
+    </div>
+    <div>
+
+    <TextField
+        sx={{ marginLeft: 'auto',
+            marginRight: 'auto',
+            width: 600}}
+        id="aliceAddress"
+        type="text"
+        label="Alice Address"
+        value={aliceAddress} onChange={handleAliceAddress}
+        variant="standard"
+    />
+
+    <TextField
+        sx={{ marginLeft: 'auto',
+            marginRight: 'auto',
+            width: 600}}
+        id="iv"
+        type="text"
+        label="IV"
+        value={iv} onChange={handleIV}
+        variant="standard"
+    />
+      <TextField
+        sx={{ marginLeft: 'auto',
+            marginRight: 'auto',
+            width: 600}}
+        id="cipherText"
+        type="text"
+        label="CipherText"
+        value={cipherText} onChange={handleCipherText}
+        variant="standard"
+    />
+
+    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+
+    </div>
     </div>
   );
 }

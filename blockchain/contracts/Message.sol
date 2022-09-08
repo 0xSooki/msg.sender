@@ -1,18 +1,23 @@
 pragma solidity ^0.8.0;
 
-
+import "node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "node_modules/@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "node_modules/@openzeppelin/contracts/utils/Context.sol";
 import "node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-contract SenderMessage is  Ownable{
+contract SenderMessage is ERC721Enumerable, ERC721Burnable, Ownable{
 
     struct Message {
         bytes cipherText;
+        bool encrypted;
         uint pubkeyX;
         bool pubkeyYodd;
         uint128 iv;
         address to;
         address from;
         uint value;
+        uint8 eventSavedOrNft;
     }
 
     uint public totalSupply = 0;
@@ -23,7 +28,7 @@ contract SenderMessage is  Ownable{
     address authorized;
 
     event Withdrawal(address indexed user, uint amount);
-    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes text, uint pubkey, uint amount);
+    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, uint8 eventSavedOrNft, uint amount);
 
 
 
@@ -31,19 +36,48 @@ contract SenderMessage is  Ownable{
         authorized = _authorized;
     }
 
-    function mint(bytes memory cipherText, uint ephempubkey, address to) external payable {
+    function sendCipherText(bytes memory cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, address to, uint8 eventSavedOrNft) external payable {
         //id must never be 0
         uint _id = totalSupply += 1;
-        // message[_id].cipherText = cipherText;
-        // message[_id].ephempubkey = ephempubkey;
-        // message[_id].from = _msgSender();
-        // message[_id].to = to;
-        // message[_id].value = msg.value;
 
-        //the NFT goes to the receiver
-        //super._mint(to, _id);
+        if (eventSavedOrNft > 1){
+            message[_id].cipherText = cipherText;
+            message[_id].encrypted = true;
+            message[_id].pubkeyX = pubkeyX;
+            message[_id].pubkeyYodd = pubkeyYodd;
+            message[_id].from = _msgSender();
+            message[_id].iv = iv;
+            message[_id].to = to;
+            message[_id].value = msg.value;
+            if(eventSavedOrNft > 2){
+               // the NFT goes to the receiver
+                super._mint(to, _id);
+            }
+        }
+        
         balance[to] += msg.value;
-        emit NewMessage(_msgSender(), to, _id, cipherText, ephempubkey, msg.value);
+        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value);
+        //return _id;
+    }
+
+    function sendPlainText(bytes memory plainText, uint8 eventSavedOrNft, address to) external payable {
+        //id must never be 0
+        uint _id = totalSupply += 1;
+
+        if (eventSavedOrNft > 1){
+            message[_id].cipherText = cipherText;
+            message[_id].encrypted = false;
+            message[_id].from = _msgSender();
+            message[_id].to = to;
+            message[_id].value = msg.value;
+            if(eventSavedOrNft > 2){
+               // the NFT goes to the receiver
+                super._mint(to, _id);
+            }
+        }
+        
+        balance[to] += msg.value;
+        emit NewMessage(_msgSender(), to, _id, plainText, 0, 0,  0,  eventSavedOrNft, msg.value);
         //return _id;
     }
 
