@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
 import  {decrypt}  from "../logic/Ecnryption"
+import Button from '@mui/material/Button';
 
 
 const CONTRACT_CREATION_BLOCK = 27986896;
@@ -14,6 +15,7 @@ export default function Home(props) {
   const [myMessages, setMyMessages] = useState([]);
 
   useEffect(() => {
+    const abortController = new AbortController()
     async function checkState() {
       //await new Promise(r => setTimeout(r, 500));
       if (props.signer === null) {
@@ -22,8 +24,11 @@ export default function Home(props) {
     }
     checkState();
 
-    sync();
+    //sync();
     startListening();
+    return function cleanup(){
+      abortController.abort()
+    }
   }, [props.messageABI.current, props.signer]);
 
 
@@ -127,18 +132,27 @@ export default function Home(props) {
         {myMessages
           ? myMessages.map((message) => {
               console.log(message);
-              if(message.args.encrypted){
+              //If the message is encrypted...
+              if(message.args.pubkeyX._hex.length>4 && message.args.iv._hex.length>4){
+                //if we have the private key to decipher it.
+                if(props.privKey.length>0){
+                  return (
+                    <p key={message.args.msgId}>
+                      {decryptMsg(message.args.cipherText,message.args.pubkeyX,
+                                               message.args.pubkeyYodd, message.args.iv._hex )}
+                    </p>
+                      )
+                  }else{
+                    //if not..
+                    return(<p>Encrypted message. Decrypt with your private key.</p>)
+                    
+                }
+              }else{
+                //If the message is not encrypted
                 return (
                   <p key={message.args.msgId}>
                     {hex_to_ascii(message.args.cipherText)}
                   </p>)
-              }else{
-                return (
-                  <p key={message.args.msgId}>
-                    {decryptMsg(message.args.cipherText,message.args.pubkeyX,
-                                             message.args.pubkeyYodd, message.args.iv._hex )}
-                  </p>
-                    )
               }
             }
           )
@@ -147,7 +161,15 @@ export default function Home(props) {
       </ul>
     </div>
     <div>
-
+    <Button variant="contained" color="success" sx ={{
+            marginLeft:"auto",
+             marginRight:"auto",
+             marginTop:"auto",
+             marginBottom:"auto",
+            }} onClick={sync}
+            >
+            Sync past messages
+            </Button>
 
     <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
 

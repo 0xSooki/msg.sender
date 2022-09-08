@@ -52,6 +52,7 @@ function App() {
                  element={ 
                     <Home signer={ signer } messageABI={ messageABI } myAddress={myAddress}
                           provider={provider} privKey={privKey} 
+                          setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
                           contractAddress={"0x270b80292699c68D060F5ffECCC099B78465a3F3"}
                         /> }
                     />
