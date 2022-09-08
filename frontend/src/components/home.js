@@ -7,6 +7,7 @@ import  {decrypt, getPubKey}  from "../logic/Ecnryption"
 
 
 const CONTRACT_CREATION_BLOCK = 27986896;
+const crypto = require('crypto-browserify');
 
 export default function Home(props) {
   const navigate = useNavigate();
@@ -28,29 +29,19 @@ export default function Home(props) {
     startListening();
   }, [props.messageABI.current, props.signer]);
 
-  const handleCipherText = (event) =>{
-    setCipherText(event.target.value);
-  }
-
-  const handleIV = (event) =>{
-    setIV(event.target.value);
-  }
-  
-  const handleAliceAddress = (event) => {
-    setAliceAddress(event.target.value)
-  }
-
-  const decryptMsg = (alicePibKeyX, alicePibKeyYodd, _iv) => {
+  const decryptMsg = (cipherText, alicePubKeyX, alicePibKeyYodd, _iv) => {
     let alicePubKey ="";
     if (alicePibKeyYodd){
-      alicePubKey = "0x03" + alicePibKeyX;
+      alicePubKey = "0x03" + alicePubKeyX.toHexString().slice(2);
     }else{
-      alicePubKey = "0x02" + alicePibKeyX;
+      alicePubKey = "0x02" + alicePubKeyX.toHexString().slice(2);
     }
+    console.log(alicePubKey);
+    console.log(_iv)
     const key = crypto.createECDH('secp256k1')
     key.setPrivateKey(props.privKey);
     const _secret = key.computeSecret(ethers.utils.arrayify(alicePubKey), null)
-    const message = decrypt(cipherText, _secret, iv);
+    const message = decrypt(ethers.utils.arrayify(cipherText), _secret, ethers.utils.arrayify(_iv));
     console.log(message);
     return message;
   }
@@ -144,13 +135,23 @@ export default function Home(props) {
         {myMessages
           ? myMessages.map((message) => {
               console.log(message);
-              return (
-                <p key={message.args.msgId}>
-                  {hex_to_ascii(message.args.text)}
-                </p>
-              );
-            })
-          : null}
+              if(message.args.encrypted){
+                return (
+                  <p key={message.args.msgId}>
+                    {hex_to_ascii(message.args.cipherText)}
+                  </p>)
+              }else{
+                return (
+                  <p key={message.args.msgId}>
+                    {decryptMsg(message.args.cipherText,message.args.pubkeyX,
+                                             message.args.pubkeyYodd, message.args.iv._hex )}
+                  </p>
+                    )
+              }
+            }
+          )
+          :<p>No Messages</p> 
+          }
       </ul>
     </div>
     <div>

@@ -90,7 +90,10 @@ const getATxFromAddress = async(last_block, addr) =>{
 
 const decrypt = (cipherText, secret, iv) => {
     const decrypter = crypto.createDecipheriv("aes-256-cbc", secret, iv);
+    console.log("decrypter", decrypter);
+    console.log("cipherText", cipherText);
     let decryptedMsg = decrypter.update(cipherText, "hex", "utf8");
+    console.log("decryptedMsg", decryptedMsg);
     decryptedMsg += decrypter.final("utf8");
     console.log("Decrypted message: " + decryptedMsg);
     return decryptedMsg;

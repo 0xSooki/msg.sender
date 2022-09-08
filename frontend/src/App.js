@@ -51,7 +51,7 @@ function App() {
           <Route exact path="/" 
                  element={ 
                     <Home signer={ signer } messageABI={ messageABI } myAddress={myAddress}
-                          provider={provider} 
+                          provider={provider} privKey={privKey} 
                           contractAddress={"0x270b80292699c68D060F5ffECCC099B78465a3F3"}
                         /> }
                     />
@@ -61,7 +61,10 @@ function App() {
                     privKey={privKey} provider={provider} messageABI={ messageABI }
                         /> }
                     />
-          <Route path="/connect"  element={<Connect connectWallet={connectWallet}/>} />
+          <Route path="/connect"  element={
+                    <Connect 
+                    setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
+                    connectWallet={connectWallet}/>} />
         </Routes>
       </HashRouter>
     </div>
