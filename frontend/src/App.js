@@ -4,6 +4,7 @@ import './App.css';
 import Connect from './components/connect'
 import Home from './components/home'
 import SendMessage from "./components/SendMessage"
+import Header from "./components/Header";
 import { ethers } from "ethers";
 import React, { useEffect, useState, useRef } from "react";
 
@@ -46,7 +47,9 @@ function App() {
 
   return (
     <div>
+      
       <HashRouter>
+      <Header />
         <Routes>
           <Route exact path="/" 
                  element={ 

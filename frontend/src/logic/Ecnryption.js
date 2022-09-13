@@ -13,8 +13,8 @@ const getPubKey = async (last_block, addr) => {
     //  const quickNode = new ethers.providers.JsonRpcProvider(
     //   `https://polygon.infura.io/v3/${process.env.WEB3_INFURA_PROJECT_ID}`
     //  )
-    const quickNode = new ethers.providers.JsonRpcProvider(process.env.QUICKNODE_MUMBAI);
-    //const quickNode = new ethers.providers.JsonRpcProvider("https://dawn-still-glitter.matic-testnet.quiknode.pro//");
+    //const quickNode = new ethers.providers.JsonRpcProvider(process.env.QUICKNODE_MUMBAI);
+    const quickNode = new ethers.providers.JsonRpcProvider("https://dawn-still-glitter.matic-testnet.quiknode.pro/03d623d4fda96910a5fc227ac442b7285b128f87/");
     const tx = await quickNode.getTransaction(
         transaction
     )

@@ -44,7 +44,7 @@ export default function SendMessage(props){
         }
         //computeSecret();
         const _secret = computeSecret();
-        encryptMessage(_secret);
+        await encryptMessage(_secret);
         const key = crypto.createECDH('secp256k1')
         key.setPrivateKey(props.privKey);
         const myPubKey =key.getPublicKey('hex', 'compressed');
@@ -55,6 +55,10 @@ export default function SendMessage(props){
         }
         const x = BigInt("0x"+myPubKey.slice(2));
         console.log(x)
+        console.log(cipherText)
+        console.log(odd)
+        console.log(iv)
+        console.log(bobsAddress)
         //for now, we are only sending messages as events. (..., 1) 
         props.messageABI.current.sendCipherText(cipherText,x, odd, iv, bobsAddress, 1)
         .then(async (_txHash) => {
@@ -62,6 +66,7 @@ export default function SendMessage(props){
             _txHash.wait().then(receipt => {
                 setMyMessage("");
                 setBobsAddress("");
+                setCipherText("");
                 console.log("tx mined: ", receipt);               
             } )
             .catch((error) => {
@@ -87,21 +92,28 @@ export default function SendMessage(props){
     }
 
     const encryptMessage = async (_secret) => {
-        const iv = crypto.randomBytes(16);
-        setIV(iv);
-        console.log(iv);
-        console.log("before ecnrypting. Secret: ", _secret);
-        console.log(typeof _secret);
-        const cipher = crypto.createCipheriv(
-            'aes-256-cbc', _secret, iv);
-        console.log("cipher", cipher);
-        const encrypted = cipher.update(myMessage);
-        console.log("encrypted", encrypted);
-        const _cipherText = Buffer.concat([encrypted, cipher.final()]);
-        console.log("_cipherText", _cipherText)
-        setCipherText(_cipherText);
-        console.log("end");
- 
+        return new Promise((resolve, reject) => { 
+            const iv = crypto.randomBytes(16);
+            setIV(iv);
+            console.log(iv);
+            console.log("before ecnrypting. Secret: ", _secret);
+            console.log(typeof _secret);
+            const cipher = crypto.createCipheriv(
+                'aes-256-cbc', _secret, iv);
+            console.log("cipher", cipher);
+            console.log("myMessage",myMessage);
+            const encrypted = cipher.update(myMessage);
+            console.log("encrypted", encrypted);
+            const _cipherText = Buffer.concat([encrypted, cipher.final()]);
+            console.log("_cipherText", _cipherText)
+            setCipherText(_cipherText);
+            console.log("end");
+            resolve(true); 
+            
+            
+            
+        });
+        
     }
 
     const getBobsPubKey = async(event) => {

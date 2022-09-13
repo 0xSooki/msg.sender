@@ -51,21 +51,22 @@ export default function Home(props) {
 
   const startListening = async () => {
     if (props.messageABI.current !== null) {
-      while (props.messageABI.current.signer === null) {
-        console.log("waiting");
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      props.messageABI.current.removeAllListeners();
+      if (props.messageABI.current.signer !== null) {
+        // await new Promise((r) => setTimeout(r, 1000));
+        props.messageABI.current.removeAllListeners();
       props.messageABI.current.on(
         "NewMessage",
-        (from, to, msgId, text, pubkey, amount) => {
+        (from, to, msgId, cipherText, pubkeyX, pubkeyYodd, iv, eventSavedOrNft, amount) => {
           if (to.toLowerCase() === props.myAddress.toLowerCase()) {
             let info = {
               from: from,
               to: to,
               msgId: msgId,
-              text: text,
-              pubkey: pubkey,
+              cipherText: cipherText,
+              pubkeyX: pubkeyX,
+              pubkeyYodd: pubkeyYodd,
+              iv: iv,
+              eventSavedOrNft: eventSavedOrNft,
               amount: amount,
             };
             console.log(info);
@@ -77,7 +78,11 @@ export default function Home(props) {
           }
         }
       );
+      console.log("Finished creating listening");
+      }
+      
     }
+    console.log("Finished listening block.");
   };
 
   const sync = async () => {
@@ -118,6 +123,7 @@ export default function Home(props) {
           i -= 1000;
         }
       }
+      startListening();
       return;
     }
   };
