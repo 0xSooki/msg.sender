@@ -5,16 +5,20 @@ import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
-
+import {useLazyQuery, gql} from "@apollo/client";
+import { SYNC_MY_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
 const crypto = require('crypto-browserify');
 
+
 export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
+  const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
 
   useEffect(() => {
+    console.log("From GraphQL:",data, loading, error)
     const abortController = new AbortController()
     async function checkState() {
       //await new Promise(r => setTimeout(r, 500));
@@ -29,7 +33,7 @@ export default function Home(props) {
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer]);
+  }, [props.messageABI.current, props.signer, loading]);
 
 
   const decryptMsg = (cipherText, alicePubKeyX, alicePibKeyYodd, _iv) => {
@@ -85,6 +89,11 @@ export default function Home(props) {
     console.log("Finished listening block.");
   };
 
+  const syncWithTheGraph = async() => {
+    
+    console.log("data from graphql:", data);
+  }
+
   const sync = async () => {
     let _myMessages = [];
     if (props.messageABI.current !== null) {
@@ -127,9 +136,8 @@ export default function Home(props) {
       return;
     }
   };
-
-  console.log(props.signer);
   return (
+    
     <div display="block">
     <div className="flex justify-center">
       
@@ -172,12 +180,15 @@ export default function Home(props) {
              marginRight:"auto",
              marginTop:"auto",
              marginBottom:"auto",
-            }} onClick={sync}
+            }} 
+            //onClick={sync}
+            onClick={() => {syncMyMessages( {variables: {user: props.myAddress.toLowerCase()}} )}}
             >
             Sync past messages
             </Button>
 
     <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+   
 
     </div>
     </div>

@@ -1,0 +1,8 @@
+sources:
+  - name: SenderMessage
+    handler:
+      graphql:
+        endpoint: https://api.thegraph.com/subgraphs/name/oscarsernarosero/msgsender
+        #network: mumbai
+document:
+  ./src/graph/msg_history_query.graphql

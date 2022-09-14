@@ -7,8 +7,31 @@ import SendMessage from "./components/SendMessage"
 import Header from "./components/Header";
 import { ethers } from "ethers";
 import React, { useEffect, useState, useRef } from "react";
+import {ApolloClient, InMemoryCache, ApolloProvider, HttpLink, from, useLazyQuery, gql} from "@apollo/client";
+import {onError} from "@apollo/client/link/error";
 
 const contractABI = require("./abi/SenderMessage.json");
+
+const errorLink = onError(({graphqlErrors, networkError}) => {
+  if(graphqlErrors){
+    graphqlErrors.map((message, location, path) => {
+      alert(`graphql error ${message} location ${location} path ${path}`)
+      return;
+    })
+  }
+  if(networkError){
+    networkError.map((message, location, path) => {
+      alert(`graphql error ${message} location ${location} path ${path}`)
+      return;
+    })
+  }
+})
+const link = from([errorLink, new HttpLink({uri: "https://api.thegraph.com/subgraphs/name/oscarsernarosero/msgsender"})])
+const client = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: link
+})
+
 
 function App() {
   const [provider, setProvider] = useState(
@@ -47,7 +70,7 @@ function App() {
 
   return (
     <div>
-      
+      <ApolloProvider client={client}>
       <HashRouter>
       <Header />
         <Routes>
@@ -71,6 +94,7 @@ function App() {
                     connectWallet={connectWallet}/>} />
         </Routes>
       </HashRouter>
+      </ApolloProvider>
     </div>
   );
 }
