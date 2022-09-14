@@ -5,16 +5,22 @@ import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
-
+import {useLazyQuery, useQuery} from "@apollo/client";
+import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
 const crypto = require('crypto-browserify');
 
+
 export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
+  const [convos, setConvos] = useState({});
+  const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
+  //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
 
   useEffect(() => {
+    console.log("From GraphQL:",data, loading, error)
     const abortController = new AbortController()
     async function checkState() {
       //await new Promise(r => setTimeout(r, 500));
@@ -23,21 +29,26 @@ export default function Home(props) {
       }
     }
     checkState();
-
-    //sync();
+    if (!loading && data){
+      syncWithTheGraph();
+    }
     startListening();
+    
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer]);
+  }, [props.messageABI.current, props.signer, loading, ]);
 
 
-  const decryptMsg = (cipherText, alicePubKeyX, alicePibKeyYodd, _iv) => {
+  const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
     let alicePubKey ="";
+    const alicePubKeyX = BigInt(_alicePubKeyX)
+    const _iv = "0x"+BigInt(__iv).toString(16)
+    console.log(alicePubKeyX.toString(16));
     if (alicePibKeyYodd){
-      alicePubKey = "0x03" + alicePubKeyX.toHexString().slice(2);
+      alicePubKey = "0x03" + alicePubKeyX.toString(16);
     }else{
-      alicePubKey = "0x02" + alicePubKeyX.toHexString().slice(2);
+      alicePubKey = "0x02" + alicePubKeyX.toString(16);
     }
     console.log(alicePubKey);
     console.log(_iv)
@@ -49,37 +60,101 @@ export default function Home(props) {
     return message;
   }
 
+  const listenWithTheGraph = async () => {
+
+  }
+
+  //@deprecated
   const startListening = async () => {
     if (props.messageABI.current !== null) {
-      while (props.messageABI.current.signer === null) {
-        console.log("waiting");
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      props.messageABI.current.removeAllListeners();
+      if (props.messageABI.current.signer !== null) {
+        // await new Promise((r) => setTimeout(r, 1000));
+        props.messageABI.current.removeAllListeners();
       props.messageABI.current.on(
         "NewMessage",
-        (from, to, msgId, text, pubkey, amount) => {
-          if (to.toLowerCase() === props.myAddress.toLowerCase()) {
+        (from, to, msgId, cipherText, pubkeyX, pubkeyYodd, iv, eventSavedOrNft, amount) => {
+          if (to.toLowerCase() === props.myAddress.toLowerCase() || from.toLowerCase() === props.myAddress.toLowerCase()) {
             let info = {
               from: from,
               to: to,
               msgId: msgId,
-              text: text,
-              pubkey: pubkey,
+              text: cipherText,
+              pubkeyX: pubkeyX,
+              pubkeyYodd: pubkeyYodd,
+              iv: iv,
+              eventSavedOrNft: eventSavedOrNft,
               amount: amount,
             };
             console.log(info);
-            if (!myMessages.includes({ args: info })) {
-              setMyMessages((arr) => [...arr, { args: info }]);
+            if (!myMessages.includes(info)) {
+              setMyMessages((arr) => [...arr,  info ]);
               setMyMessages((arr) => [...new Set(arr)]);
+              let bob = "";
+              if( info.to.toLowerCase() === props.myAddress.toLowerCase()){
+                bob = info.from.toLowerCase();
+              }else{
+                bob = info.to.toLowerCase();
+              }
+              let currentConvos = {...convos}
+              if(currentConvos[bob]){
+                currentConvos[bob].push(info)
+              }else{
+                currentConvos[bob] = [info]
+              }
+              setConvos(currentConvos);
               return;
             }
           }
         }
       );
+      console.log("Finished creating listening");
+      }
+      
     }
+    console.log("Finished listening block.");
   };
 
+  const syncWithTheGraph = async() => {
+    let _myMessages = [];
+    if (props.messageABI.current !== null) {
+      while (!data) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      while (props.messageABI.current.signer === null) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      console.log("syncing");
+    }
+    console.log("data from graphql:", data);
+    const allMyMessages = [].concat(data.Sent, data.Received)
+    _myMessages = [].concat(_myMessages, allMyMessages);
+    const myMessagesSet = new Set(_myMessages);
+    const sortedMessages = [...myMessagesSet];
+    sortedMessages.sort((a, b) => (BigInt(a.id) > BigInt(b.id)) ? 1 : -1)
+    console.log(sortedMessages);
+    setMyMessages(sortedMessages);
+    let currentConvos = {...convos};
+    sortedMessages.map(message => {
+      let bob = "";
+      if( message.to.toLowerCase() === props.myAddress.toLowerCase()){
+        bob = message.from.toLowerCase();
+      }else{
+        bob = message.to.toLowerCase();
+      }
+      console.log("convos bob", bob)
+      console.log("convos currentConvos", currentConvos)
+      if(currentConvos[bob]){
+        currentConvos[bob].push(message)
+      }else{
+        currentConvos[bob] = [message]
+      }
+      console.log("convos currentConvos[bob]", currentConvos[bob])
+      
+    })
+    return setConvos(currentConvos);
+  }
+
+  //@deprecated
   const sync = async () => {
     let _myMessages = [];
     if (props.messageABI.current !== null) {
@@ -118,12 +193,13 @@ export default function Home(props) {
           i -= 1000;
         }
       }
+      startListening();
       return;
     }
   };
-
-  console.log(props.signer);
+  console.log("convos",convos);
   return (
+    
     <div display="block">
     <div className="flex justify-center">
       
@@ -133,25 +209,35 @@ export default function Home(props) {
           ? myMessages.map((message) => {
               console.log(message);
               //If the message is encrypted...
-              if(message.args.pubkeyX._hex.length>4 && message.args.iv._hex.length>4){
+              if(message.pubkeyX.length>4 && message.iv.length>4){
                 //if we have the private key to decipher it.
                 if(props.privKey.length>0){
-                  return (
-                    <p key={message.args.msgId}>
-                      {decryptMsg(message.args.cipherText,message.args.pubkeyX,
-                                               message.args.pubkeyYodd, message.args.iv._hex )}
-                    </p>
-                      )
+                  try{
+                    return (
+                      <p key={message.id}>
+                        {
+                          decryptMsg(message.text,message.pubkeyX,
+                                                 message.pubkeyYodd, message.iv )}                      
+                      </p>
+                        )
+                  }catch{
+                    return (
+                      <p key={message.id}>
+                          {hex_to_ascii(message.text)  }                  
+                      </p>
+                        )
+                  }
+                  
                   }else{
                     //if not..
-                    return(<p>Encrypted message. Decrypt with your private key.</p>)
+                    return(<p>{hex_to_ascii(message.text)}</p>)
                     
                 }
               }else{
                 //If the message is not encrypted
                 return (
-                  <p key={message.args.msgId}>
-                    {hex_to_ascii(message.args.cipherText)}
+                  <p key={message.id}>
+                    {hex_to_ascii(message.text)}
                   </p>)
               }
             }
@@ -166,12 +252,15 @@ export default function Home(props) {
              marginRight:"auto",
              marginTop:"auto",
              marginBottom:"auto",
-            }} onClick={sync}
+            }} 
+            //onClick={sync}
+            onClick={() => {syncMyMessages( {variables: {user: props.myAddress.toLowerCase()}} )}}
             >
             Sync past messages
             </Button>
 
     <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+   
 
     </div>
     </div>
