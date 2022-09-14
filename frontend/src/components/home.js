@@ -15,6 +15,7 @@ const crypto = require('crypto-browserify');
 export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
+  const [convos, setConvos] = useState({});
   const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
   //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
 
@@ -32,6 +33,7 @@ export default function Home(props) {
       syncWithTheGraph();
     }
     startListening();
+    
     return function cleanup(){
       abortController.abort()
     }
@@ -87,6 +89,19 @@ export default function Home(props) {
             if (!myMessages.includes(info)) {
               setMyMessages((arr) => [...arr,  info ]);
               setMyMessages((arr) => [...new Set(arr)]);
+              let bob = "";
+              if( info.to.toLowerCase() === props.myAddress.toLowerCase()){
+                bob = info.from.toLowerCase();
+              }else{
+                bob = info.to.toLowerCase();
+              }
+              let currentConvos = {...convos}
+              if(currentConvos[bob]){
+                currentConvos[bob].push(info)
+              }else{
+                currentConvos[bob] = [info]
+              }
+              setConvos(currentConvos);
               return;
             }
           }
@@ -118,6 +133,25 @@ export default function Home(props) {
     sortedMessages.sort((a, b) => (BigInt(a.id) > BigInt(b.id)) ? 1 : -1)
     console.log(sortedMessages);
     setMyMessages(sortedMessages);
+    let currentConvos = {...convos};
+    sortedMessages.map(message => {
+      let bob = "";
+      if( message.to.toLowerCase() === props.myAddress.toLowerCase()){
+        bob = message.from.toLowerCase();
+      }else{
+        bob = message.to.toLowerCase();
+      }
+      console.log("convos bob", bob)
+      console.log("convos currentConvos", currentConvos)
+      if(currentConvos[bob]){
+        currentConvos[bob].push(message)
+      }else{
+        currentConvos[bob] = [message]
+      }
+      console.log("convos currentConvos[bob]", currentConvos[bob])
+      
+    })
+    return setConvos(currentConvos);
   }
 
   //@deprecated
@@ -163,6 +197,7 @@ export default function Home(props) {
       return;
     }
   };
+  console.log("convos",convos);
   return (
     
     <div display="block">
