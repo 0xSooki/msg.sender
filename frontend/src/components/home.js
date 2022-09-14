@@ -27,8 +27,9 @@ export default function Home(props) {
       }
     }
     checkState();
-
-    //sync();
+    if (!loading && data){
+      syncWithTheGraph();
+    }
     startListening();
     return function cleanup(){
       abortController.abort()
@@ -36,12 +37,15 @@ export default function Home(props) {
   }, [props.messageABI.current, props.signer, loading]);
 
 
-  const decryptMsg = (cipherText, alicePubKeyX, alicePibKeyYodd, _iv) => {
+  const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
     let alicePubKey ="";
+    const alicePubKeyX = BigInt(_alicePubKeyX)
+    const _iv = "0x"+BigInt(__iv).toString(16)
+    console.log(alicePubKeyX.toString(16));
     if (alicePibKeyYodd){
-      alicePubKey = "0x03" + alicePubKeyX.toHexString().slice(2);
+      alicePubKey = "0x03" + alicePubKeyX.toString(16);
     }else{
-      alicePubKey = "0x02" + alicePubKeyX.toHexString().slice(2);
+      alicePubKey = "0x02" + alicePubKeyX.toString(16);
     }
     console.log(alicePubKey);
     console.log(_iv)
@@ -90,10 +94,27 @@ export default function Home(props) {
   };
 
   const syncWithTheGraph = async() => {
-    
+    let _myMessages = [];
+    if (props.messageABI.current !== null) {
+      while (!data) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      while (props.messageABI.current.signer === null) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      console.log("syncing");
+    }
     console.log("data from graphql:", data);
+    const allMyMessages = [].concat(data.Sent, data.Received)
+    _myMessages = [].concat(_myMessages, allMyMessages);
+    const myMessagesSet = new Set(_myMessages);
+    const sortedMessages = [...myMessagesSet];
+    sortedMessages.sort((a, b) => (BigInt(a.id) > BigInt(b.id)) ? 1 : -1)
+    console.log(sortedMessages);
+    setMyMessages(sortedMessages);
   }
 
+  //@deprecated
   const sync = async () => {
     let _myMessages = [];
     if (props.messageABI.current !== null) {
@@ -147,25 +168,25 @@ export default function Home(props) {
           ? myMessages.map((message) => {
               console.log(message);
               //If the message is encrypted...
-              if(message.args.pubkeyX._hex.length>4 && message.args.iv._hex.length>4){
+              if(message.pubkeyX.length>4 && message.iv.length>4){
                 //if we have the private key to decipher it.
                 if(props.privKey.length>0){
                   return (
-                    <p key={message.args.msgId}>
-                      {decryptMsg(message.args.cipherText,message.args.pubkeyX,
-                                               message.args.pubkeyYodd, message.args.iv._hex )}
+                    <p key={message.id}>
+                      {decryptMsg(message.text,message.pubkeyX,
+                                               message.pubkeyYodd, message.iv )}
                     </p>
                       )
                   }else{
                     //if not..
-                    return(<p>Encrypted message. Decrypt with your private key.</p>)
+                    return(<p>{hex_to_ascii(message.text)}</p>)
                     
                 }
               }else{
                 //If the message is not encrypted
                 return (
-                  <p key={message.args.msgId}>
-                    {hex_to_ascii(message.args.cipherText)}
+                  <p key={message.id}>
+                    {hex_to_ascii(message.text)}
                   </p>)
               }
             }
