@@ -5,8 +5,8 @@ import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
-import {useLazyQuery, gql} from "@apollo/client";
-import { SYNC_MY_MESSAGES } from "../GraphQl/Queries";
+import {useLazyQuery, useQuery} from "@apollo/client";
+import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
 const crypto = require('crypto-browserify');
@@ -16,6 +16,7 @@ export default function Home(props) {
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
   const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
+  //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
 
   useEffect(() => {
     console.log("From GraphQL:",data, loading, error)
@@ -34,7 +35,7 @@ export default function Home(props) {
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer, loading]);
+  }, [props.messageABI.current, props.signer, loading, ]);
 
 
   const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
@@ -57,6 +58,11 @@ export default function Home(props) {
     return message;
   }
 
+  const listenWithTheGraph = async () => {
+
+  }
+
+  //@deprecated
   const startListening = async () => {
     if (props.messageABI.current !== null) {
       if (props.messageABI.current.signer !== null) {
@@ -65,12 +71,12 @@ export default function Home(props) {
       props.messageABI.current.on(
         "NewMessage",
         (from, to, msgId, cipherText, pubkeyX, pubkeyYodd, iv, eventSavedOrNft, amount) => {
-          if (to.toLowerCase() === props.myAddress.toLowerCase()) {
+          if (to.toLowerCase() === props.myAddress.toLowerCase() || from.toLowerCase() === props.myAddress.toLowerCase()) {
             let info = {
               from: from,
               to: to,
               msgId: msgId,
-              cipherText: cipherText,
+              text: cipherText,
               pubkeyX: pubkeyX,
               pubkeyYodd: pubkeyYodd,
               iv: iv,
@@ -78,8 +84,8 @@ export default function Home(props) {
               amount: amount,
             };
             console.log(info);
-            if (!myMessages.includes({ args: info })) {
-              setMyMessages((arr) => [...arr, { args: info }]);
+            if (!myMessages.includes(info)) {
+              setMyMessages((arr) => [...arr,  info ]);
               setMyMessages((arr) => [...new Set(arr)]);
               return;
             }

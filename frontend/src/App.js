@@ -7,10 +7,11 @@ import SendMessage from "./components/SendMessage"
 import Header from "./components/Header";
 import { ethers } from "ethers";
 import React, { useEffect, useState, useRef } from "react";
-import {ApolloClient, InMemoryCache, ApolloProvider, HttpLink, from, useLazyQuery, gql} from "@apollo/client";
+import {ApolloClient, InMemoryCache, ApolloProvider, HttpLink, from} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 
 const contractABI = require("./abi/SenderMessage.json");
+
 
 const errorLink = onError(({graphqlErrors, networkError}) => {
   if(graphqlErrors){

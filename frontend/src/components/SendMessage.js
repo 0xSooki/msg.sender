@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {useNavigate} from 'react-router-dom'
 import {getPubKey} from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
@@ -20,8 +20,8 @@ export default function SendMessage(props){
     const [bobsPubKey, setBobsPubKey] = useState("")
     const [recoveredBobsAddress, setRecoveredBobsAddress] = useState("")
     const [secret, setSecret] = useState("");
-    const [iv, setIV] = useState([]);
-    const [cipherText, setCipherText] = useState("");
+    const iv = useRef([]);
+    const cipherText = useRef("");
 
 
     useEffect(( ) => {
@@ -55,18 +55,18 @@ export default function SendMessage(props){
         }
         const x = BigInt("0x"+myPubKey.slice(2));
         console.log(x)
-        console.log(cipherText)
+        console.log(cipherText.current)
         console.log(odd)
-        console.log(iv)
+        console.log(iv.current)
         console.log(bobsAddress)
         //for now, we are only sending messages as events. (..., 1) 
-        props.messageABI.current.sendCipherText(cipherText,x, odd, iv, bobsAddress, 1)
+        props.messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, bobsAddress, 1)
         .then(async (_txHash) => {
             console.log(_txHash);
             _txHash.wait().then(receipt => {
                 setMyMessage("");
                 setBobsAddress("");
-                setCipherText("");
+                cipherText.current="";
                 console.log("tx mined: ", receipt);               
             } )
             .catch((error) => {
@@ -93,20 +93,19 @@ export default function SendMessage(props){
 
     const encryptMessage = async (_secret) => {
         return new Promise((resolve, reject) => { 
-            const iv = crypto.randomBytes(16);
-            setIV(iv);
-            console.log(iv);
+            iv.current  = crypto.randomBytes(16);
+            console.log(iv.current);
             console.log("before ecnrypting. Secret: ", _secret);
             console.log(typeof _secret);
             const cipher = crypto.createCipheriv(
-                'aes-256-cbc', _secret, iv);
+                'aes-256-cbc', _secret, iv.current);
             console.log("cipher", cipher);
             console.log("myMessage",myMessage);
             const encrypted = cipher.update(myMessage);
             console.log("encrypted", encrypted);
             const _cipherText = Buffer.concat([encrypted, cipher.final()]);
             console.log("_cipherText", _cipherText)
-            setCipherText(_cipherText);
+            cipherText.current =_cipherText;
             console.log("end");
             resolve(true); 
             
@@ -213,10 +212,10 @@ export default function SendMessage(props){
             null:
             <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
             }
-            {iv?
-            <h4>{iv.toString('hex')}</h4>:null}
-            {cipherText?
-            <h4>{cipherText.toString('hex')}</h4>:null}
+            {iv.current?
+            <h4>{iv.current.toString('hex')}</h4>:null}
+            {cipherText.current?
+            <h4>{cipherText.current.toString('hex')}</h4>:null}
     </div>
         
     )
