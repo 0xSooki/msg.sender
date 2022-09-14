@@ -171,12 +171,22 @@ export default function Home(props) {
               if(message.pubkeyX.length>4 && message.iv.length>4){
                 //if we have the private key to decipher it.
                 if(props.privKey.length>0){
-                  return (
-                    <p key={message.id}>
-                      {decryptMsg(message.text,message.pubkeyX,
-                                               message.pubkeyYodd, message.iv )}
-                    </p>
-                      )
+                  try{
+                    return (
+                      <p key={message.id}>
+                        {
+                          decryptMsg(message.text,message.pubkeyX,
+                                                 message.pubkeyYodd, message.iv )}                      
+                      </p>
+                        )
+                  }catch{
+                    return (
+                      <p key={message.id}>
+                          {hex_to_ascii(message.text)  }                  
+                      </p>
+                        )
+                  }
+                  
                   }else{
                     //if not..
                     return(<p>{hex_to_ascii(message.text)}</p>)
