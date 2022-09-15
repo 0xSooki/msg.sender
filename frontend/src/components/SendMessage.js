@@ -7,9 +7,11 @@ import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
 import PrivKeyInput from './PrivKeyInput';
+import { useContract } from 'wagmi'
 
 
 const crypto = require('crypto-browserify');
+const contractABI = require("../abi/SenderMessage.json");
 
 export default function SendMessage(props){
     window.Buffer = window.Buffer || require("buffer").Buffer;
@@ -22,6 +24,10 @@ export default function SendMessage(props){
     const [secret, setSecret] = useState("");
     const iv = useRef([]);
     const cipherText = useRef("");
+    const messageABI = useRef(useContract({
+        addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
+        contractInterface: contractABI.abi,
+        signerOrProvider:props.signer}));
 
 
     useEffect(( ) => {
@@ -60,7 +66,7 @@ export default function SendMessage(props){
         console.log(iv.current)
         console.log(bobsAddress)
         //for now, we are only sending messages as events. (..., 1) 
-        props.messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, bobsAddress, 1)
+        messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, bobsAddress, 1)
         .then(async (_txHash) => {
             console.log(_txHash);
             _txHash.wait().then(receipt => {
@@ -144,7 +150,7 @@ export default function SendMessage(props){
     const handleAddress = async(event) => {
         setBobsAddress(event.target.value);
     }
-    
+    console.log(messageABI.current);
     return (
 
       <div style={{height:"100vh",textAlign:"center",display:"block"}}>
