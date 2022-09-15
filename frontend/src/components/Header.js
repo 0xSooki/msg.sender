@@ -34,7 +34,7 @@ export default function Header(props){
             <SendIcon fontSize={"small"}/>
           </NavLink>
         </nav>
-        <div style={{display:"inline-block", marginLeft:"52%", width:"max-content", padding:"2px"}}>
+        <div style={{display:"inline-block", marginLeft:"32%", width:"max-content", padding:"2px"}}>
         <ConnectButton/>
         </div>
       </div>

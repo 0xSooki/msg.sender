@@ -144,7 +144,7 @@ export default function SendMessage(props){
     const handleAddress = async(event) => {
         setBobsAddress(event.target.value);
     }
-    
+    console.log(props.messageABI.current);
     return (
 
       <div style={{height:"100vh",textAlign:"center",display:"block"}}>

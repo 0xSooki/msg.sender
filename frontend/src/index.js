@@ -7,22 +7,25 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "@rainbow-me/rainbowkit/styles.css"; 
   
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit"; 
-import { chain, configureChains, createClient, WagmiConfig } from "wagmi"; 
+import { chain, configureChains, defaultChains,createClient, WagmiConfig } from "wagmi"; 
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc"; 
+import { publicProvider } from 'wagmi/providers/public'
   
 const { chains, provider } = configureChains( 
-  [chain.polygonMumbai ], 
+    [...defaultChains, chain.polygonMumbai, chain.polygon], 
   [ 
     jsonRpcProvider({ 
       rpc: (chain) => ({ 
         http: "https://nd-930-288-914.p2pify.com/60a13ee4daa23a0b0f777c70f99bfbc8", 
       }), 
     }), 
+   // publicProvider()
   ] 
 ); 
+console.log(provider)
   
 const { connectors } = getDefaultWallets({ 
-  appName: "My Lens App", 
+  appName: "msg.sender", 
   chains, 
 }); 
   
