@@ -50,6 +50,10 @@ function App(props) {
   const [signer, setSigner] = useState(signerObj.data);
   const [myAddress, setMyAddress] = useState(myAddressObj.address);
   const [privKey, setPrivateKey] = useState([]);
+  // while(signerObj.isFetching){
+  //   //await new Promise((r) => setTimeout(r, 500));
+  //   console.log("waiting")
+  // }
   const messageABI = useRef(useContract({
     addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
     contractInterface: contractABI.abi,
@@ -68,6 +72,7 @@ function App(props) {
       //   contractABI.abi,
       //   signer
       // );
+      setSigner(signerObj.data);
       };
       initContracts();
   }, [signerObj, provider]);
