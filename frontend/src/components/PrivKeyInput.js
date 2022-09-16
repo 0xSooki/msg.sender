@@ -36,7 +36,7 @@ export default function PrivKeyInput(props){
                     marginRight: 'auto',
                     width: 600}}
                 id="privKey"
-                type="text"
+                type="password"
                 label="Private Key"
                 value={privKeyInput} onChange={handlePrivKey}
                 InputProps={{

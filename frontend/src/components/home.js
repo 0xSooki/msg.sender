@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
+import ConvoList from "./ConvoList"
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import {useLazyQuery, useQuery} from "@apollo/client";
@@ -134,10 +135,41 @@ export default function Home(props) {
     const myMessagesSet = new Set(_myMessages);
     const sortedMessages = [...myMessagesSet];
     sortedMessages.sort((a, b) => (BigInt(a.id) > BigInt(b.id)) ? 1 : -1)
+    let finalMessages = sortedMessages
     console.log(sortedMessages);
-    setMyMessages(sortedMessages);
+    if (props.privKey.length>0){
+      finalMessages = sortedMessages.map((message => {
+        console.log("message",message)
+        const cipherText = message.text
+        console.log("cipherText",cipherText)
+        let plainText="";
+        try{
+          plainText = decryptMsg(cipherText,message.pubkeyX,
+          message.pubkeyYodd, message.iv )
+          console.log("plainText",plainText)
+        }catch{
+          plainText=cipherText;
+        }
+        
+          let info = {
+            from: message.from,
+            to: message.to,
+            msgId: message.msgId,
+            text: plainText,
+            pubkeyX: message.pubkeyX,
+            pubkeyYodd: message.pubkeyYodd,
+            iv: message.iv,
+            eventSavedOrNft: message.eventSavedOrNft,
+            amount: message.BigIntamount,
+          };
+        console.log("message",info)
+        return info
+      }))
+      
+    }
+    setMyMessages(finalMessages);
     let currentConvos = {...convos};
-    sortedMessages.map(message => {
+    finalMessages.map(message => {
       let bob = "";
       if( message.to.toLowerCase() === props.myAddress.toLowerCase()){
         bob = message.from.toLowerCase();
@@ -206,7 +238,7 @@ export default function Home(props) {
     <div display="block">
     <div className="flex justify-center">
       
-      <h1 className="font-bold text-2xl">This is Home</h1>
+    <ConvoList convos={convos}/>
       <ul>
         {myMessages
           ? myMessages.map((message) => {
