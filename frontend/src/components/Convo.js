@@ -27,9 +27,10 @@ export default function Convo(props){
                 console.log("message", message)
                 if(message.from === props.myAddress.toLowerCase()){
                     return(
-                        <div style={{margingRight:"30%", marginLeft:"0", position: "relative", display:"block", marginTop:"5px"}}>
+                        <div style={{margingRight:"0", marginLeft:"auto", position: "relative", 
+                                display:"block", marginTop:"5px", width:"max-content"}}>
                         <Card  key={message.msgId} 
-                                sx={{ width: "70%", height:"min-content", 
+                                sx={{ width: "100%", height:"min-content", 
                                      margin:"3px", borderRadius:"1vw", backgroundColor:"#3f6"}}>
                             
                             <CardContent>
@@ -43,9 +44,10 @@ export default function Convo(props){
                 )
                 }else{
                     return(
-                        <div style={{ margingRight:"0", marginLeft:"30%", position: "relative", display:"block", marginTop:"10px"}}>
+                        <div style={{ margingRight:"30%", marginLeft:"0", position: "relative", 
+                                    display:"block", marginTop:"10px", width:"max-content"}}>
                         <Card  key={message.msgId} 
-                                sx={{ width: "80%", height:"min-content",
+                                sx={{ width: "100%", height:"min-content",
                                      margin:"3px", borderRadius:"1vw", backgroundColor:"#ccc"}}>
                             
                             <CardContent>

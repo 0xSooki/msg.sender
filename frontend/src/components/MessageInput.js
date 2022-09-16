@@ -11,6 +11,7 @@ const crypto = require('crypto-browserify');
 const contractABI = require("../abi/SenderMessage.json");
 
 export default function MessageInput(props){
+    window.Buffer = window.Buffer || require("buffer").Buffer;
 
     const [pubkeyX,setPubKeyX] = useState(0n);
     const [pubkeyYodd,setPubkeyYodd] = useState(false);

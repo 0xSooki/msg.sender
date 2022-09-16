@@ -246,19 +246,19 @@ export default function Home(props) {
   return (
     
     <div display="block">
-    <div style={{display:"table"}}>
-    <div style={{float:"left", width: "40%"}}>
-    <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
-                setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
-          />
+      <div style={{display:"table", clear:"both", width:"100%"}}>
+        <div style={{float:"left", width: "40%"}}>
+        <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
+                    setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
+              />
+            </div>
+        <div style={{float:"right", width: "60%"}}>
+          <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} selectedConvo={selectedConvo}/>
+          <MessageInput  pubkeyX={bobsPubKeyX} privKey={props.privKey}
+                        pubkeyYodd={bobsPubKeyYodd} signer={props.signer}
+                        bobsAddress={selectedConvo}/>
         </div>
-    <div style={{float:"right", width: "60%"}}>
-      <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} selectedConvo={selectedConvo}/>
-      <MessageInput  pubkeyX={bobsPubKeyX} privKey={props.privKey}
-                     pubkeyYodd={bobsPubKeyYodd} signer={props.signer}
-                     bobsAddress={selectedConvo}/>
-    </div>
-    </div>
+      </div>
     <div>
     <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
