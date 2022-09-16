@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
 import ConvoList from "./ConvoList"
+import Convo from "./Convo";
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import {useLazyQuery, useQuery} from "@apollo/client";
@@ -18,6 +19,7 @@ export default function Home(props) {
   const [myMessages, setMyMessages] = useState([]);
   const [convos, setConvos] = useState({});
   const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
+  const [selectedConvo, setSelectedConvo] = useState(null);
   //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function Home(props) {
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer, loading, ]);
+  }, [props.messageABI.current, props.signer, loading]);
 
 
   const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
@@ -233,53 +235,16 @@ export default function Home(props) {
     }
   };
   console.log("convos",convos);
+  console.log("selectedConvo",selectedConvo);
+  
   return (
     
     <div display="block">
     <div className="flex justify-center">
       
-    <ConvoList convos={convos}/>
-      <ul>
-        {myMessages
-          ? myMessages.map((message) => {
-              console.log(message);
-              //If the message is encrypted...
-              if(message.pubkeyX.length>4 && message.iv.length>4){
-                //if we have the private key to decipher it.
-                if(props.privKey.length>0){
-                  try{
-                    return (
-                      <p key={message.id}>
-                        {
-                          decryptMsg(message.text,message.pubkeyX,
-                                                 message.pubkeyYodd, message.iv )}                      
-                      </p>
-                        )
-                  }catch{
-                    return (
-                      <p key={message.id}>
-                          {hex_to_ascii(message.text)  }                  
-                      </p>
-                        )
-                  }
-                  
-                  }else{
-                    //if not..
-                    return(<p>{hex_to_ascii(message.text)}</p>)
-                    
-                }
-              }else{
-                //If the message is not encrypted
-                return (
-                  <p key={message.id}>
-                    {hex_to_ascii(message.text)}
-                  </p>)
-              }
-            }
-          )
-          :<p>No Messages</p> 
-          }
-      </ul>
+    <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}/>
+    <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} selectedConvo={selectedConvo}/>
+      
     </div>
     <div>
     <Button variant="contained" color="success" sx ={{
@@ -294,7 +259,7 @@ export default function Home(props) {
             Sync past messages
             </Button>
 
-    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey) }/>
    
 
     </div>
