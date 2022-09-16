@@ -19,7 +19,7 @@ export default function Convo(props){
     },[messages, props.selectedConvo]);
 
     return(
-        <Box sx={{maxWidth:"58%", minWidth:"50%", height:"550px", padding:"15px", overflow:"scroll", 
+        <Box sx={{width:"100%",  height:"480px", padding:"15px", overflow:"scroll", 
             borderWidth:"5px", borderColor:"#aad", borderRadius:"9px" }}>
             {messages?
             messages.length>0?

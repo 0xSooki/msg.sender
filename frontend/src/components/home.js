@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
 import ConvoList from "./ConvoList"
 import Convo from "./Convo";
+import MessageInput from "./MessageInput";
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import {useLazyQuery, useQuery} from "@apollo/client";
@@ -20,6 +21,9 @@ export default function Home(props) {
   const [convos, setConvos] = useState({});
   const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
   const [selectedConvo, setSelectedConvo] = useState(null);
+  const [bobsPubKeyX, setPubKeyX] = useState(null);
+  const [bobsPubKeyYodd, setPubKeyYodd] = useState(null);
+  const [synced, setSynced] = useState(false);
   //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
 
   useEffect(() => {
@@ -32,7 +36,7 @@ export default function Home(props) {
       }
     }
     checkState();
-    if (!loading && data){
+    if (!loading && data && !synced){
       syncWithTheGraph();
     }
     startListening();
@@ -139,6 +143,7 @@ export default function Home(props) {
     sortedMessages.sort((a, b) => (BigInt(a.id) > BigInt(b.id)) ? 1 : -1)
     let finalMessages = sortedMessages
     console.log(sortedMessages);
+    setSynced(true)
     if (props.privKey.length>0){
       finalMessages = sortedMessages.map((message => {
         console.log("message",message)
@@ -165,6 +170,7 @@ export default function Home(props) {
             amount: message.BigIntamount,
           };
         console.log("message",info)
+
         return info
       }))
       
@@ -240,11 +246,18 @@ export default function Home(props) {
   return (
     
     <div display="block">
-    <div className="flex justify-center">
-      
-    <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}/>
-    <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} selectedConvo={selectedConvo}/>
-      
+    <div style={{display:"table"}}>
+    <div style={{float:"left", width: "40%"}}>
+    <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
+                setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
+          />
+        </div>
+    <div style={{float:"right", width: "60%"}}>
+      <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} selectedConvo={selectedConvo}/>
+      <MessageInput  pubkeyX={bobsPubKeyX} privKey={props.privKey}
+                     pubkeyYodd={bobsPubKeyYodd} signer={props.signer}
+                     bobsAddress={selectedConvo}/>
+    </div>
     </div>
     <div>
     <Button variant="contained" color="success" sx ={{
