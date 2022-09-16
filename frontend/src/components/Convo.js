@@ -6,6 +6,10 @@ import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import hex_to_ascii from "../logic/helpers";
+import  {decrypt}  from "../logic/Ecnryption"
+import { ethers } from "ethers";
+
+const crypto = require('crypto-browserify');
 
 export default function Convo(props){
 
@@ -17,6 +21,32 @@ export default function Convo(props){
         setMessages(props.messages)
         console.log("ConvoComponent", props.messages)
     },[messages, props.selectedConvo]);
+
+    const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
+        try{
+             let alicePubKey ="";
+            const alicePubKeyX = BigInt(_alicePubKeyX)
+            const _iv = "0x"+BigInt(__iv).toString(16)
+            console.log(alicePubKeyX.toString(16));
+            if (alicePibKeyYodd){
+            alicePubKey = "0x03" + alicePubKeyX.toString(16);
+            }else{
+            alicePubKey = "0x02" + alicePubKeyX.toString(16);
+            }
+            console.log(alicePubKey);
+            console.log(_iv)
+            const key = crypto.createECDH('secp256k1')
+            key.setPrivateKey(props.privKey);
+            const _secret = key.computeSecret(ethers.utils.arrayify(alicePubKey), null)
+            const message = decrypt(ethers.utils.arrayify(cipherText), _secret, ethers.utils.arrayify(_iv));
+            console.log(message);
+            return message;
+        }catch(e){
+            console.log("issue decrypting own message", e)
+            return cipherText;
+        }
+       
+      }
 
     return(
         <Box sx={{width:"100%",  height:"480px", padding:"15px", overflow:"scroll", 
@@ -36,7 +66,7 @@ export default function Convo(props){
                             <CardContent>
                                 <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", maxLines:"2",
                                             textOverflow:"ellipsis", display:"block", wordWrap:"break-word"}}>
-                                {message.text}
+                                { decryptMsg(message.text, props.pubkeyX, props.pubkeyYodd,message.iv)}
                                 </p>
                             </CardContent>
                         </Card>

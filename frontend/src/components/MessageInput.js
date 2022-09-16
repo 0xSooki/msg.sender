@@ -28,7 +28,10 @@ export default function MessageInput(props){
     useEffect(()=>{
         setPubKeyX(props.pubkeyX)
         setPubkeyYodd(props.pubkeyYodd)
-        getBobsPubKey();
+        if(props.pubkeyX){
+            getBobsPubKey();
+        }
+        
     },[props.pubkeyX, props.pubkeyYodd]);
 
     const handleMessage = (event) => {
@@ -116,7 +119,7 @@ export default function MessageInput(props){
         if(!props.pubkeyYodd){
             compressed = "0x02" + x.toString(16);
         }else{
-            compressed = "0x03" + props.pubkeyX;
+            compressed = "0x03" + x.toString(16);
         }
         setBobsPubKey(compressed) 
         return;
