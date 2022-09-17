@@ -8,7 +8,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import "@rainbow-me/rainbowkit/styles.css";   
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit"; 
-import { chain, configureChains, createClient, WagmiConfig } from "wagmi"; 
+import { chain, configureChains, defaultChains,createClient, WagmiConfig } from "wagmi"; 
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc"; 
  
 const { chains, provider } = configureChains( 

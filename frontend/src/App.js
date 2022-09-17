@@ -10,6 +10,9 @@ import { ethers } from "ethers";
 import React, { useEffect, useState, useRef } from "react";
 import {ApolloClient, InMemoryCache, ApolloProvider, HttpLink, from} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { InjectedConnector } from 'wagmi/connectors/injected'
+import { useProvider, useSigner, useContract } from 'wagmi'
 
 const contractABI = require("./abi/SenderMessage.json");
 
@@ -35,41 +38,59 @@ const client = new ApolloClient({
 })
 
 
-function App() {
-  const [provider, setProvider] = useState(
-    new ethers.providers.Web3Provider(window.ethereum)
-  );
-  const [signer, setSigner] = useState(null);
-  const [myAddress, setMyAddress] = useState("");
+function App(props) {
+  
+  
+  const { connectWallet } = useConnect({
+    connector: new InjectedConnector(),
+  })
+  const { disconnect } = useDisconnect()
+  const myAddressObj = useAccount()
+  const provider = useProvider();
+  const signerObj = useSigner();
+  const [signer, setSigner] = useState(signerObj.data);
+  const [myAddress, setMyAddress] = useState(myAddressObj.address);
   const [privKey, setPrivateKey] = useState([]);
-  const messageABI = useRef(null);
+  // while(signerObj.isFetching){
+  //   //await new Promise((r) => setTimeout(r, 500));
+  //   console.log("waiting")
+  // }
+  const messageABI = useRef(useContract({
+    addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
+    contractInterface: contractABI.abi,
+    signerOrProvider:signer}));
+
+  // messageABI.current = useContract({
+  //   addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
+  //   contractInterface: contractABI.abi,
+  //   signerOrProvider:signer}
+  //   );
 
   useEffect(() => {
     const initContracts = async () => {
-      messageABI.current = new ethers.Contract(
-        "0x270b80292699c68D060F5ffECCC099B78465a3F3",
-        contractABI.abi,
-        signer
-      );
+      // messageABI.current = new ethers.Contract(
+      //   "0x270b80292699c68D060F5ffECCC099B78465a3F3",
+      //   contractABI.abi,
+      //   signer
+      // );
+      setSigner(signerObj.data);
+      };
+      initContracts();
+  }, [signerObj, provider]);
 
-      console.log("messageABI", messageABI);
-      console.log("signer", signer);
-    };
-    initContracts();
-  }, [provider, signer]);
-
-  const connectWallet = async () => {
-    const _provider = new ethers.providers.Web3Provider(window.ethereum);
-    await _provider.send("eth_requestAccounts", []);
-    const signer = _provider.getSigner();
-    const _address = await signer.getAddress();
-    setMyAddress(_address);
-    console.log(_address);
-    setProvider(_provider);
-    setSigner(signer);
-    return;
-  };
-
+  // const connectWallet = async () => {
+  //   const _provider = new ethers.providers.Web3Provider(window.ethereum);
+  //   await _provider.send("eth_requestAccounts", []);
+  //   const signer = _provider.getSigner();
+  //   const _address = await signer.getAddress();
+  //   setMyAddress(_address);
+  //   console.log(_address);
+  //   setProvider(_provider);
+  //   setSigner(signer);
+  //   return;
+  // };
+console.log(signerObj.data)
+console.log(messageABI.current)
   return (
     <div>
       <ApolloProvider client={client}>

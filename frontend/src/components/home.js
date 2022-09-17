@@ -116,13 +116,16 @@ export default function Home(props) {
 
   const syncWithTheGraph = async() => {
     let _myMessages = [];
+    console.log("abi",props.messageABI.current)
     if (props.messageABI.current !== null) {
       while (!data) {
         await new Promise((r) => setTimeout(r, 500));
+        console.log("waiting on data")
       }
-      while (props.messageABI.current.signer === null) {
-        await new Promise((r) => setTimeout(r, 500));
-      }
+      // while (props.messageABI.current.signer === null) {
+      //   await new Promise((r) => setTimeout(r, 500));
+      //   console.log("waiting on signer")
+      // }
       console.log("syncing");
     }
     console.log("data from graphql:", data);
