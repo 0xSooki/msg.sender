@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import HomeIcon from '@mui/icons-material/Home';
 import SendIcon from '@mui/icons-material/Send';
-import {useNavigate} from 'react-router-dom'
 import { NavLink } from 'react-router-dom';
 import { ConnectButton } from "@rainbow-me/rainbowkit"; 
 
@@ -30,7 +29,7 @@ export default function Header(props){
           </NavLink>
           <NavLink style={barItem} to="/send-message">
             
-            Send Message
+            Start New Conversation
             <SendIcon fontSize={"small"}/>
           </NavLink>
         </nav>
