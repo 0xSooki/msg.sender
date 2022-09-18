@@ -26,6 +26,7 @@ export default function PrivKeyInput(props){
         const _privateKey = ethers.utils.arrayify(raw);
         console.log("arrayified _privateKey", _privateKey);
         props.setPrivateKey(_privateKey);
+        setPrivKeyInput("")
     }
     
     return (
