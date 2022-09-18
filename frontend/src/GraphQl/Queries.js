@@ -1,6 +1,6 @@
 import {gql} from "@apollo/client";
 
-export const SYNC_MY_MESSAGES = gql`
+const SYNC_MY_MESSAGES = gql`
 query myMessages($user: String!) {
 
   Sent:messages(where: 
@@ -30,11 +30,11 @@ query myMessages($user: String!) {
 }
 `
 
-export const LISTEN_TO_NEW_MESSAGES = gql`
-query myMessages($user: String!) @live{
+const LISTEN_TO_NEW_MESSAGES = gql`
+query myNewMessages($user: String!){
 
   Sent:messages(where: 
-        {from: $user}, last: 1
+        {from: $user}, last: 5
   ) {
     id
     from
@@ -46,7 +46,7 @@ query myMessages($user: String!) @live{
     eventSavedOrNft
   }
   Received: messages(where: 
-        {to: $user}, last: 1
+        {to: $user}, last: 5
   ) {
     id
     from
@@ -59,3 +59,5 @@ query myMessages($user: String!) @live{
   }
 }
 `
+
+ export {SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES}
