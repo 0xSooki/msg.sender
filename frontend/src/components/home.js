@@ -150,13 +150,19 @@ export default function Home(props) {
         const cipherText = message.text
         console.log("cipherText",cipherText)
         let plainText="";
-        try{
-          plainText = decryptMsg(cipherText,message.pubkeyX,
-          message.pubkeyYodd, message.iv )
-          console.log("plainText",plainText)
-        }catch{
-          plainText=cipherText;
+        if(message.from!==props.myAddress.toLowerCase()){
+          try{
+            plainText = decryptMsg(cipherText,message.pubkeyX,
+            message.pubkeyYodd, message.iv )
+            console.log("plainText",plainText)
+          }catch{
+            plainText=cipherText;
+          }
+        }else{
+            plainText=cipherText;
+          
         }
+        
         
           let info = {
             from: message.from,
@@ -246,19 +252,21 @@ export default function Home(props) {
   return (
     
     <div display="block">
-    <div style={{display:"table"}}>
-    <div style={{float:"left", width: "40%"}}>
-    <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
-                setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
-          />
+      <div style={{display:"table", clear:"both", width:"100%"}}>
+        <div style={{float:"left", width: "40%"}}>
+        <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
+                    setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
+              />
+            </div>
+        <div style={{float:"right", width: "60%"}}>
+          <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} 
+                selectedConvo={selectedConvo} pubkeyYodd={bobsPubKeyYodd}
+                pubkeyX={bobsPubKeyX} privKey={props.privKey}/>
+          <MessageInput  pubkeyX={bobsPubKeyX} privKey={props.privKey}
+                        pubkeyYodd={bobsPubKeyYodd} signer={props.signer}
+                        bobsAddress={selectedConvo}/>
         </div>
-    <div style={{float:"right", width: "60%"}}>
-      <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} selectedConvo={selectedConvo}/>
-      <MessageInput  pubkeyX={bobsPubKeyX} privKey={props.privKey}
-                     pubkeyYodd={bobsPubKeyYodd} signer={props.signer}
-                     bobsAddress={selectedConvo}/>
-    </div>
-    </div>
+      </div>
     <div>
     <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
