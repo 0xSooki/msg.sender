@@ -102,6 +102,7 @@ console.log(messageABI.current)
                           provider={provider} privKey={privKey} 
                           setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
                           contractAddress={"0x270b80292699c68D060F5ffECCC099B78465a3F3"}
+                          client={client}
                         /> }
                     />
           <Route exact path="/send-message" 

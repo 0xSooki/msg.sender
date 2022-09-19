@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import hex_to_ascii from "../logic/helpers";
 import PrivKeyInput from './PrivKeyInput';
+import ConvoList from "./ConvoList"
+import Convo from "./Convo";
+import MessageInput from "./MessageInput";
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import {useLazyQuery, useQuery} from "@apollo/client";
+
 import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
@@ -17,8 +21,21 @@ export default function Home(props) {
   const [myMessages, setMyMessages] = useState([]);
   const [convos, setConvos] = useState({});
   const [syncMyMessages, {loading, error, data }] = useLazyQuery(SYNC_MY_MESSAGES);
-  //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
+  const [selectedConvo, setSelectedConvo] = useState(null);
+  const [bobsPubKeyX, setPubKeyX] = useState(null);
+  const [bobsPubKeyYodd, setPubKeyYodd] = useState(null);
+  const [synced, setSynced] = useState(false);
 
+  
+  // if(query){}
+  // const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(query);
+  console.log("myAddress props:", props.myAddress)
+  const {liveLoading, liveError, liveData } = useQuery(LISTEN_TO_NEW_MESSAGES,{variables: {user: props.myAddress.toLowerCase(), pollInterval: 4500,}} );
+
+  console.log("LIVE data:", liveData);
+  console.log("LIVE liveError:", liveError);
+  console.log("LIVE liveLoading:", liveLoading);
+  
   useEffect(() => {
     console.log("From GraphQL:",data, loading, error)
     const abortController = new AbortController()
@@ -29,15 +46,16 @@ export default function Home(props) {
       }
     }
     checkState();
-    if (!loading && data){
+    if (!loading && data && !synced){
       syncWithTheGraph();
     }
-    startListening();
+    //startListening();
+    listenWithTheGraph();
     
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer, loading, ]);
+  }, [props.messageABI.current, props.signer, loading, convos, liveData]);
 
 
   const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
@@ -61,8 +79,9 @@ export default function Home(props) {
   }
 
   const listenWithTheGraph = async () => {
-
-  }
+    
+    }
+  
 
   //@deprecated
   const startListening = async () => {
@@ -134,10 +153,49 @@ export default function Home(props) {
     const myMessagesSet = new Set(_myMessages);
     const sortedMessages = [...myMessagesSet];
     sortedMessages.sort((a, b) => (BigInt(a.id) > BigInt(b.id)) ? 1 : -1)
+    let finalMessages = sortedMessages
     console.log(sortedMessages);
-    setMyMessages(sortedMessages);
+    setSynced(true)
+    if (props.privKey.length>0){
+      finalMessages = sortedMessages.map((message => {
+        console.log("message",message)
+        const cipherText = message.text
+        console.log("cipherText",cipherText)
+        let plainText="";
+        if(message.from!==props.myAddress.toLowerCase()){
+          try{
+            plainText = decryptMsg(cipherText,message.pubkeyX,
+            message.pubkeyYodd, message.iv )
+            console.log("plainText",plainText)
+          }catch{
+            plainText=cipherText;
+          }
+        }else{
+            plainText=cipherText;
+          
+        }
+        
+        
+          let info = {
+            from: message.from,
+            to: message.to,
+            msgId: message.msgId,
+            text: plainText,
+            pubkeyX: message.pubkeyX,
+            pubkeyYodd: message.pubkeyYodd,
+            iv: message.iv,
+            eventSavedOrNft: message.eventSavedOrNft,
+            amount: message.BigIntamount,
+          };
+        console.log("message",info)
+
+        return info
+      }))
+      
+    }
+    setMyMessages(finalMessages);
     let currentConvos = {...convos};
-    sortedMessages.map(message => {
+    finalMessages.map(message => {
       let bob = "";
       if( message.to.toLowerCase() === props.myAddress.toLowerCase()){
         bob = message.from.toLowerCase();
@@ -201,55 +259,28 @@ export default function Home(props) {
     }
   };
   console.log("convos",convos);
+  console.log("selectedConvo",selectedConvo);
+  
   return (
     
     <div display="block">
-    <div className="flex justify-center">
-      
-      <h1 className="font-bold text-2xl">This is Home</h1>
-      <ul>
-        {myMessages
-          ? myMessages.map((message) => {
-              console.log(message);
-              //If the message is encrypted...
-              if(message.pubkeyX.length>4 && message.iv.length>4){
-                //if we have the private key to decipher it.
-                if(props.privKey.length>0){
-                  try{
-                    return (
-                      <p key={message.id}>
-                        {
-                          decryptMsg(message.text,message.pubkeyX,
-                                                 message.pubkeyYodd, message.iv )}                      
-                      </p>
-                        )
-                  }catch{
-                    return (
-                      <p key={message.id}>
-                          {hex_to_ascii(message.text)  }                  
-                      </p>
-                        )
-                  }
-                  
-                  }else{
-                    //if not..
-                    return(<p>{hex_to_ascii(message.text)}</p>)
-                    
-                }
-              }else{
-                //If the message is not encrypted
-                return (
-                  <p key={message.id}>
-                    {hex_to_ascii(message.text)}
-                  </p>)
-              }
-            }
-          )
-          :<p>No Messages</p> 
-          }
-      </ul>
-    </div>
+      <div style={{display:"table", clear:"both", width:"100%"}}>
+        <div style={{float:"left", width: "40%"}}>
+        <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
+                    setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
+              />
+            </div>
+        <div style={{float:"right", width: "60%"}}>
+          <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} 
+                selectedConvo={selectedConvo} pubkeyYodd={bobsPubKeyYodd}
+                pubkeyX={bobsPubKeyX} privKey={props.privKey}/>
+          <MessageInput  pubkeyX={bobsPubKeyX} privKey={props.privKey}
+                        pubkeyYodd={bobsPubKeyYodd} signer={props.signer}
+                        bobsAddress={selectedConvo}/>
+        </div>
+      </div>
     <div>
+      {liveData}
     <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
              marginRight:"auto",
@@ -262,7 +293,7 @@ export default function Home(props) {
             Sync past messages
             </Button>
 
-    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey)}/>
+    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey) }/>
    
 
     </div>
