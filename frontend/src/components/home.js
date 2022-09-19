@@ -9,6 +9,7 @@ import MessageInput from "./MessageInput";
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
 import {useLazyQuery, useQuery} from "@apollo/client";
+
 import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
@@ -24,8 +25,17 @@ export default function Home(props) {
   const [bobsPubKeyX, setPubKeyX] = useState(null);
   const [bobsPubKeyYodd, setPubKeyYodd] = useState(null);
   const [synced, setSynced] = useState(false);
-  //const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(LISTEN_TO_NEW_MESSAGES);
 
+  
+  // if(query){}
+  // const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(query);
+  console.log("myAddress props:", props.myAddress)
+  const {liveLoading, liveError, liveData } = useQuery(LISTEN_TO_NEW_MESSAGES,{variables: {user: props.myAddress.toLowerCase(), pollInterval: 4500,}} );
+
+  console.log("LIVE data:", liveData);
+  console.log("LIVE liveError:", liveError);
+  console.log("LIVE liveLoading:", liveLoading);
+  
   useEffect(() => {
     console.log("From GraphQL:",data, loading, error)
     const abortController = new AbortController()
@@ -39,12 +49,13 @@ export default function Home(props) {
     if (!loading && data && !synced){
       syncWithTheGraph();
     }
-    startListening();
+    //startListening();
+    listenWithTheGraph();
     
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer, loading]);
+  }, [props.messageABI.current, props.signer, loading, convos, liveData]);
 
 
   const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
@@ -68,8 +79,9 @@ export default function Home(props) {
   }
 
   const listenWithTheGraph = async () => {
-
-  }
+    
+    }
+  
 
   //@deprecated
   const startListening = async () => {
@@ -268,6 +280,7 @@ export default function Home(props) {
         </div>
       </div>
     <div>
+      {liveData}
     <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
              marginRight:"auto",
