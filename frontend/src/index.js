@@ -10,6 +10,7 @@ import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { chain, configureChains, defaultChains,createClient, WagmiConfig } from "wagmi"; 
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc"; 
 import { publicProvider } from 'wagmi/providers/public'
+
   
 const { chains, provider } = configureChains( 
     [...defaultChains, chain.polygonMumbai, chain.polygon], 

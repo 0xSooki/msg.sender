@@ -14,11 +14,15 @@ const crypto = require('crypto-browserify');
 export default function Convo(props){
 
     const [messages,setMessages] = useState([]);
-
+   
     useEffect(()=>{
         setMessages([])
-        setMessages([])
-        setMessages(props.messages)
+        try{
+            setMessages(props.messages.reverse())
+        }catch{
+            setMessages(props.messages)
+        }
+        
         console.log("ConvoComponent", props.messages)
     },[messages, props.selectedConvo]);
 
@@ -50,7 +54,8 @@ export default function Convo(props){
 
     return(
         <Box sx={{width:"100%",  height:"480px", padding:"15px", overflow:"scroll", 
-            borderWidth:"5px", borderColor:"#aad", borderRadius:"9px" }}>
+            borderWidth:"5px", borderColor:"#aad", borderRadius:"9px",
+            display:"flex", flexDirection:"column-reverse"  }}>
             {messages?
             messages.length>0?
             messages.map((message) => {
