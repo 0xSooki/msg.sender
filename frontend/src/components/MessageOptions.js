@@ -25,6 +25,7 @@ export default function MessageOptions(props) {
         borderRadius: "0.7rem",
       }}
     >
+    <Tooltip title="You can send your message encrypted, or NOT encrypted. Encryption will gurantee the absolute privacy of your message, and will allow you to send money as an incentive for the recepient to read your content. However, you need to enter your private key into the app for the encryption to be possible.">
       <div
         style={{
           display: "block",
@@ -36,6 +37,7 @@ export default function MessageOptions(props) {
         <div>
           <label style={{ fontSize: "0.8rem" }}>Encrypted Message?</label>
         </div>
+        
         <Switch
           checked={props.encryptedMessage}
           onChange={handleEncrypted}
@@ -43,6 +45,7 @@ export default function MessageOptions(props) {
           inputProps={{ "aria-label": "controlled" }}
         />
       </div>
+      </Tooltip>
       <div
         style={{
           display: "block",
@@ -67,10 +70,11 @@ export default function MessageOptions(props) {
             exclusive
             onChange={handleMessageType}
           >
-            <Tooltip title="Send messages stored as an Event on the blockchain (available for 4 years)">
+            <Tooltip title="Send messages stored as an Event on the blockchain (available for 4 years. The cheapest option). If your intended recepient is not aware of this app, he/she most likely won't be aware you sent them a message either. If this is the case, we recommend to send message as an NFT.">
               <ToggleButton
                 value="event"
                 size="small"
+                
                 sx={{
                   fontSize: "0.7rem",
                   color: "white",
@@ -80,7 +84,7 @@ export default function MessageOptions(props) {
                 $ Event
               </ToggleButton>
             </Tooltip>
-            <Tooltip title="Sends messages stored on the blockchain (available indefinitely)">
+            <Tooltip title="Sends messages stored on the blockchain (available indefinitely. Medium cost). If your intended recepient is not aware of this app, he/she most likely won't be aware you sent them a message either. If this is the case, we recommend to send message as an NFT.">
               <ToggleButton
                 value="saved"
                 size="small"
@@ -93,7 +97,7 @@ export default function MessageOptions(props) {
                 $$ Stored
               </ToggleButton>
             </Tooltip>
-            <Tooltip title="Send messages as NFTs (available indefinitely)">
+            <Tooltip title="Send message as an NFT. The recipient will be able to see an NFT in his/her OpenSea page or any other NFT explorer. This makes it more likely that the person will notice the message despite the fact that he/she might not be aware of this messaging app at all. This also increases the chances that the other person will read your message and reply (the most expensive option in terms of gas)">
               <ToggleButton
                 value="nft"
                 size="small"
