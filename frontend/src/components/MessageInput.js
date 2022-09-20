@@ -43,38 +43,53 @@ export default function MessageInput(props){
     }
     
     const sendMessage = async () => {
-        if (!bobsPubKey){
-            await getBobsPubKey();
-        }
-        //computeSecret();
-        const _secret = computeSecret();
-        await encryptMessage(_secret);
-        const key = crypto.createECDH('secp256k1')
-        key.setPrivateKey(props.privKey);
-        const myPubKey =key.getPublicKey('hex', 'compressed');
-        console.log("myPubKey", myPubKey);
-        let odd = false;
-        if (myPubKey.slice(0,2) === "03"){
-            odd = true;
-        }
-        const x = BigInt("0x"+myPubKey.slice(2));
-        console.log(x)
-        console.log(cipherText.current)
-        console.log(odd)
-        console.log(iv.current)
-        //for now, we are only sending messages as events. (..., 1) 
-        messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, props.bobsAddress, 1)
-        .then(async (_txHash) => {
-            console.log(_txHash);
-            _txHash.wait().then(receipt => {
-                setMyMessage("");
-                cipherText.current="";
-                console.log("tx mined: ", receipt);               
-            } )
-            .catch((error) => {
-            console.log(error);
+        const option = messageType==="saved"?2:messageType==="nft"?3:1;
+        if(encryptedMessage){
+            if (!bobsPubKey){
+                await getBobsPubKey();
+            }
+            //computeSecret();
+            const _secret = computeSecret();
+            await encryptMessage(_secret);
+            const key = crypto.createECDH('secp256k1')
+            key.setPrivateKey(props.privKey);
+            const myPubKey =key.getPublicKey('hex', 'compressed');
+            console.log("myPubKey", myPubKey);
+            let odd = false;
+            if (myPubKey.slice(0,2) === "03"){
+                odd = true;
+            }
+            const x = BigInt("0x"+myPubKey.slice(2));
+            console.log(x)
+            console.log(cipherText.current)
+            console.log(odd)
+            console.log(iv.current)
+            messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, props.bobsAddress, option)
+            .then(async (_txHash) => {
+                console.log(_txHash);
+                _txHash.wait().then(receipt => {
+                    setMyMessage("");
+                    cipherText.current="";
+                    console.log("tx mined: ", receipt);               
+                } )
+                .catch((error) => {
+                console.log(error);
+                });
             });
-        });
+        }else{
+            messageABI.current.sendPlainText(ethers.utils.toUtf8Bytes(myMessage), option, props.bobsAddress)
+            .then(async (_txHash) => {
+                console.log(_txHash);
+                _txHash.wait().then(receipt => {
+                    setMyMessage("");
+                    cipherText.current="";
+                    console.log("tx mined: ", receipt);               
+                } )
+                .catch((error) => {
+                console.log(error);
+                });
+            });
+        }
     }
 
     const computeSecret = () => {
@@ -155,7 +170,7 @@ export default function MessageInput(props){
             />
             
                  <Button variant="contained"  color="primary" sx ={{
-                    margin:"1vw", fontSize:"0.6rem", width:"max-content",
+                    margin:"1vw", fontSize:"0.7rem", width:"max-content",
                     height:"min-content"
                     }} onClick={sendMessage}
                     >

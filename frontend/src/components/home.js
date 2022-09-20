@@ -113,7 +113,7 @@ export default function Home(props) {
                     pubkeyYodd, iv )
                     console.log("plainText",plainText)
                   }catch{
-                    plainText=cipherText;
+                    plainText=hex_to_ascii(cipherText);
                   }
                 }else{
                     plainText=cipherText;
@@ -187,21 +187,19 @@ export default function Home(props) {
         console.log("message",message)
         const cipherText = message.text
         console.log("cipherText",cipherText)
-        let plainText="";
+        let plainText=cipherText;
         if(message.from!==props.myAddress.toLowerCase()){
           try{
             plainText = decryptMsg(cipherText,message.pubkeyX,
             message.pubkeyYodd, message.iv )
             console.log("plainText",plainText)
           }catch{
-            plainText=cipherText;
+            plainText=hex_to_ascii(cipherText);
           }
         }else{
             plainText=cipherText;
           
         }
-        
-        
           let info = {
             from: message.from,
             to: message.to,
@@ -218,7 +216,31 @@ export default function Home(props) {
         return info
       }))
       
-    }
+    }else{
+      
+      finalMessages = sortedMessages.map((message => {
+        let plainText = message.text;
+        if(message.from.toLowerCase()!==props.myAddress.toLowerCase()){
+          plainText = hex_to_ascii(message.text)
+        }else{
+          plainText = message.text
+        }
+        let info = {
+          from: message.from,
+          to: message.to,
+          msgId: message.msgId,
+          text: plainText,
+          pubkeyX: message.pubkeyX,
+          pubkeyYodd: message.pubkeyYodd,
+          iv: message.iv,
+          eventSavedOrNft: message.eventSavedOrNft,
+          amount: message.BigIntamount,
+        };
+      console.log("message",info)
+
+      return info
+    }))
+  }
     setMyMessages(finalMessages);
     let currentConvos = {...convos};
     finalMessages.map(message => {
