@@ -6,6 +6,8 @@ import { useContract } from 'wagmi'
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
+import MessageOptions from './MessageOptions';
+import SendIcon from '@mui/icons-material/Send';
 
 const crypto = require('crypto-browserify');
 const contractABI = require("../abi/SenderMessage.json");
@@ -20,6 +22,8 @@ export default function MessageInput(props){
     const [secret, setSecret] = useState("");
     const iv = useRef([]);
     const cipherText = useRef("");
+    const [messageType, setMessageType] = useState("event");
+    const [encryptedMessage, setEncryptedMessage] = useState(true);
     const messageABI = useRef(useContract({
         addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
         contractInterface: contractABI.abi,
@@ -125,16 +129,20 @@ export default function MessageInput(props){
         return;
     }
     return(
-        <div>
+        <div style={{display:"flex", backgroundColor:"#e5e9f2"}}>
+            <MessageOptions setMessageType={setMessageType} setEncryptedMessage={setEncryptedMessage}
+                                messageType={messageType} encryptedMessage={encryptedMessage}/>
+            <div style={{display:"flex", minWidth:"50%", maxWidth:"100%", marginLeft:"2vw"}}> 
             <TextField
             sx={{ marginLeft: 'auto',
                 marginRight: 'auto',
-                width: "80%"}}
+                width: "100%"}}
             id="message"
             type="text"
             label="Your message"
             multiline={true}
-            maxRows={3}
+            minRows={2}
+            maxRows={4}
             value={myMessage} onChange={handleMessage}
             InputProps={{
             startAdornment: (
@@ -145,15 +153,19 @@ export default function MessageInput(props){
             }}
             variant="standard"
             />
-        <Button variant="contained" color="success" sx ={{
-            marginLeft:"auto",
-             marginRight:"auto",
-             marginTop:"auto",
-             marginBottom:"auto",
-            }} onClick={sendMessage}
-            >
-            SEND MESSAGE
-            </Button>
+            
+                 <Button variant="contained"  color="primary" sx ={{
+                    margin:"1vw", fontSize:"0.6rem", width:"max-content",
+                    height:"min-content"
+                    }} onClick={sendMessage}
+                    >
+                       send {messageType==="saved"?" stored-in-contract ":null} 
+                       {encryptedMessage?" encrypted ":" Not-encrypted "} 
+                       message {messageType==="saved"?null:" as an "} 
+                       {messageType==="saved"?null:messageType} 
+                    <SendIcon fontSize="large" sx={{marginLeft:"0.3vw"}}/>
+                </Button>
+            </div>
         </div>
     )
 
