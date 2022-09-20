@@ -14,14 +14,12 @@ const crypto = require('crypto-browserify');
 export default function Convo(props){
 
     const [messages,setMessages] = useState([]);
+    const [reversed, setReversed] = useState(false);
    
     useEffect(()=>{
         setMessages([])
-        try{
-            setMessages(props.messages.reverse())
-        }catch{
-            setMessages(props.messages)
-        }
+        setMessages(props.messages)
+            
         
         console.log("ConvoComponent", props.messages)
     },[messages, props.selectedConvo]);
@@ -56,6 +54,7 @@ export default function Convo(props){
         <Box sx={{width:"100%",  height:"480px", padding:"15px", overflow:"scroll", 
             borderWidth:"5px", borderColor:"#aad", borderRadius:"9px",
             display:"flex", flexDirection:"column-reverse"  }}>
+                <div>
             {messages?
             messages.length>0?
             messages.map((message) => {
@@ -98,7 +97,7 @@ export default function Convo(props){
                 
             }):
             <p>No messages</p>:<p>No messages</p>}
-
+            </div>
         </Box>
     )
 

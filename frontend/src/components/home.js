@@ -120,8 +120,8 @@ export default function Home(props) {
                   
                 }
             let info = {
-              from: from,
-              to: to,
+              from: from.toLowerCase(),
+              to: to.toLowerCase(),
               msgId: msgId,
               text: plainText,
               pubkeyX: pubkeyX,
