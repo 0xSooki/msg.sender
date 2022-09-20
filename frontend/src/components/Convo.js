@@ -45,7 +45,7 @@ export default function Convo(props){
             return message;
         }catch(e){
             console.log("issue decrypting own message", e)
-            return cipherText;
+            return hex_to_ascii(cipherText);
         }
        
       }
@@ -64,11 +64,11 @@ export default function Convo(props){
                         <div style={{margingRight:"0", marginLeft:"auto", position: "relative", 
                                 display:"block", marginTop:"5px", width:"max-content"}}>
                         <Card  key={message.msgId} 
-                                sx={{ width: "100%", height:"min-content", 
+                                sx={{ width: "100%",  maxWidth:"50vw",height:"min-content", 
                                      margin:"3px", borderRadius:"1vw", backgroundColor:"#3f6"}}>
                             
                             <CardContent>
-                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", maxLines:"2",
+                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", 
                                             textOverflow:"ellipsis", display:"block", wordWrap:"break-word"}}>
                                 { decryptMsg(message.text, props.pubkeyX, props.pubkeyYodd,message.iv)}
                                 </p>
@@ -81,11 +81,11 @@ export default function Convo(props){
                         <div style={{ margingRight:"30%", marginLeft:"0", position: "relative", 
                                     display:"block", marginTop:"10px", width:"max-content"}}>
                         <Card  key={message.msgId} 
-                                sx={{ width: "100%", height:"min-content",
+                                sx={{ width: "100%", maxWidth:"50vw", height:"min-content",
                                      margin:"3px", borderRadius:"1vw", backgroundColor:"#ccc"}}>
                             
                             <CardContent>
-                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", maxLines:"2",
+                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", 
                                             textOverflow:"ellipsis", display:"block", wordWrap:"break-word"}}>
                                 {message.text}
                                 </p>

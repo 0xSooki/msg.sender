@@ -6,6 +6,8 @@ import { useContract } from 'wagmi'
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
+import MessageOptions from './MessageOptions';
+import SendIcon from '@mui/icons-material/Send';
 
 const crypto = require('crypto-browserify');
 const contractABI = require("../abi/SenderMessage.json");
@@ -20,6 +22,8 @@ export default function MessageInput(props){
     const [secret, setSecret] = useState("");
     const iv = useRef([]);
     const cipherText = useRef("");
+    const [messageType, setMessageType] = useState("event");
+    const [encryptedMessage, setEncryptedMessage] = useState(true);
     const messageABI = useRef(useContract({
         addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
         contractInterface: contractABI.abi,
@@ -39,38 +43,53 @@ export default function MessageInput(props){
     }
     
     const sendMessage = async () => {
-        if (!bobsPubKey){
-            await getBobsPubKey();
-        }
-        //computeSecret();
-        const _secret = computeSecret();
-        await encryptMessage(_secret);
-        const key = crypto.createECDH('secp256k1')
-        key.setPrivateKey(props.privKey);
-        const myPubKey =key.getPublicKey('hex', 'compressed');
-        console.log("myPubKey", myPubKey);
-        let odd = false;
-        if (myPubKey.slice(0,2) === "03"){
-            odd = true;
-        }
-        const x = BigInt("0x"+myPubKey.slice(2));
-        console.log(x)
-        console.log(cipherText.current)
-        console.log(odd)
-        console.log(iv.current)
-        //for now, we are only sending messages as events. (..., 1) 
-        messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, props.bobsAddress, 1)
-        .then(async (_txHash) => {
-            console.log(_txHash);
-            _txHash.wait().then(receipt => {
-                setMyMessage("");
-                cipherText.current="";
-                console.log("tx mined: ", receipt);               
-            } )
-            .catch((error) => {
-            console.log(error);
+        const option = messageType==="saved"?2:messageType==="nft"?3:1;
+        if(encryptedMessage){
+            if (!bobsPubKey){
+                await getBobsPubKey();
+            }
+            //computeSecret();
+            const _secret = computeSecret();
+            await encryptMessage(_secret);
+            const key = crypto.createECDH('secp256k1')
+            key.setPrivateKey(props.privKey);
+            const myPubKey =key.getPublicKey('hex', 'compressed');
+            console.log("myPubKey", myPubKey);
+            let odd = false;
+            if (myPubKey.slice(0,2) === "03"){
+                odd = true;
+            }
+            const x = BigInt("0x"+myPubKey.slice(2));
+            console.log(x)
+            console.log(cipherText.current)
+            console.log(odd)
+            console.log(iv.current)
+            messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, props.bobsAddress, option)
+            .then(async (_txHash) => {
+                console.log(_txHash);
+                _txHash.wait().then(receipt => {
+                    setMyMessage("");
+                    cipherText.current="";
+                    console.log("tx mined: ", receipt);               
+                } )
+                .catch((error) => {
+                console.log(error);
+                });
             });
-        });
+        }else{
+            messageABI.current.sendPlainText(ethers.utils.toUtf8Bytes(myMessage), option, props.bobsAddress)
+            .then(async (_txHash) => {
+                console.log(_txHash);
+                _txHash.wait().then(receipt => {
+                    setMyMessage("");
+                    cipherText.current="";
+                    console.log("tx mined: ", receipt);               
+                } )
+                .catch((error) => {
+                console.log(error);
+                });
+            });
+        }
     }
 
     const computeSecret = () => {
@@ -125,16 +144,20 @@ export default function MessageInput(props){
         return;
     }
     return(
-        <div>
+        <div style={{display:"flex", backgroundColor:"#e5e9f2"}}>
+            <MessageOptions setMessageType={setMessageType} setEncryptedMessage={setEncryptedMessage}
+                                messageType={messageType} encryptedMessage={encryptedMessage}/>
+            <div style={{display:"flex", minWidth:"50%", maxWidth:"100%", marginLeft:"2vw"}}> 
             <TextField
             sx={{ marginLeft: 'auto',
                 marginRight: 'auto',
-                width: "80%"}}
+                width: "100%"}}
             id="message"
             type="text"
             label="Your message"
             multiline={true}
-            maxRows={3}
+            minRows={2}
+            maxRows={4}
             value={myMessage} onChange={handleMessage}
             InputProps={{
             startAdornment: (
@@ -145,15 +168,19 @@ export default function MessageInput(props){
             }}
             variant="standard"
             />
-        <Button variant="contained" color="success" sx ={{
-            marginLeft:"auto",
-             marginRight:"auto",
-             marginTop:"auto",
-             marginBottom:"auto",
-            }} onClick={sendMessage}
-            >
-            SEND MESSAGE
-            </Button>
+            
+                 <Button variant="contained"  color="primary" sx ={{
+                    margin:"1vw", fontSize:"0.7rem", width:"max-content",
+                    height:"min-content"
+                    }} onClick={sendMessage}
+                    >
+                       send {messageType==="saved"?" stored-in-contract ":null} 
+                       {encryptedMessage?" encrypted ":" Not-encrypted "} 
+                       message {messageType==="saved"?null:" as an "} 
+                       {messageType==="saved"?null:messageType} 
+                    <SendIcon fontSize="large" sx={{marginLeft:"0.3vw"}}/>
+                </Button>
+            </div>
         </div>
     )
 
