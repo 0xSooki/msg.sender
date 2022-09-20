@@ -8,15 +8,25 @@ import Convo from "./Convo";
 import MessageInput from "./MessageInput";
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
-import {useLazyQuery, useQuery} from "@apollo/client";
+import {useLazyQuery} from "@apollo/client";
+import { useQuery } from 'urql'
+import { useContract } from 'wagmi'
 
 import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
 const crypto = require('crypto-browserify');
+const contractABI = require("../abi/SenderMessage.json");
 
 
 export default function Home(props) {
+
+  // const [result, reexecuteQuery] = useQuery({
+  //   query: LISTEN_TO_NEW_MESSAGES,
+  //   variables: {user: props.myAddress.toLowerCase(), last: 10},
+  // })
+
+  
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
   const [convos, setConvos] = useState({});
@@ -25,17 +35,17 @@ export default function Home(props) {
   const [bobsPubKeyX, setPubKeyX] = useState(null);
   const [bobsPubKeyYodd, setPubKeyYodd] = useState(null);
   const [synced, setSynced] = useState(false);
+  const messageABI = useRef(useContract({
+    addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
+    contractInterface: contractABI.abi,
+    signerOrProvider:props.signer}));
+  //const { liveData, liveLoading, liveError } = result
 
-  
-  // if(query){}
-  // const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(query);
-  console.log("myAddress props:", props.myAddress)
-  const {liveLoading, liveError, liveData } = useQuery(LISTEN_TO_NEW_MESSAGES,{variables: {user: props.myAddress.toLowerCase(), pollInterval: 4500,}} );
+  // console.log("LIVE data:", result.data);
+  // console.log("LIVE liveError:", result.error);
+  // console.log("LIVE liveLoading:", result.fetching);
+  // console.log(result);
 
-  console.log("LIVE data:", liveData);
-  console.log("LIVE liveError:", liveError);
-  console.log("LIVE liveLoading:", liveLoading);
-  
   useEffect(() => {
     console.log("From GraphQL:",data, loading, error)
     const abortController = new AbortController()
@@ -49,13 +59,13 @@ export default function Home(props) {
     if (!loading && data && !synced){
       syncWithTheGraph();
     }
-    //startListening();
-    listenWithTheGraph();
+    startListening();
+    //listenWithTheGraph();
     
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer, loading, convos, liveData]);
+  }, [props.signer, loading, convos]);
 
 
   const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
@@ -85,19 +95,35 @@ export default function Home(props) {
 
   //@deprecated
   const startListening = async () => {
-    if (props.messageABI.current !== null) {
-      if (props.messageABI.current.signer !== null) {
+    if (messageABI.current !== null) {
+      if (messageABI.current.signer !== null) {
         // await new Promise((r) => setTimeout(r, 1000));
-        props.messageABI.current.removeAllListeners();
-      props.messageABI.current.on(
+        messageABI.current.removeAllListeners();
+      messageABI.current.on(
         "NewMessage",
         (from, to, msgId, cipherText, pubkeyX, pubkeyYodd, iv, eventSavedOrNft, amount) => {
+          console.log("NewMessage", msgId);
           if (to.toLowerCase() === props.myAddress.toLowerCase() || from.toLowerCase() === props.myAddress.toLowerCase()) {
+            console.log("NewMessage To/From me", msgId);
+            let plainText="";
+            if (props.privKey.length>0 && to.toLowerCase() === props.myAddress.toLowerCase() ){
+              
+              try{
+                    plainText = decryptMsg(cipherText,pubkeyX,
+                    pubkeyYodd, iv )
+                    console.log("plainText",plainText)
+                  }catch{
+                    plainText=cipherText;
+                  }
+                }else{
+                    plainText=cipherText;
+                  
+                }
             let info = {
-              from: from,
-              to: to,
+              from: from.toLowerCase(),
+              to: to.toLowerCase(),
               msgId: msgId,
-              text: cipherText,
+              text: plainText,
               pubkeyX: pubkeyX,
               pubkeyYodd: pubkeyYodd,
               iv: iv,
@@ -135,13 +161,13 @@ export default function Home(props) {
 
   const syncWithTheGraph = async() => {
     let _myMessages = [];
-    console.log("abi",props.messageABI.current)
-    if (props.messageABI.current !== null) {
+    console.log("abi",messageABI.current)
+    if (messageABI.current !== null) {
       while (!data) {
         await new Promise((r) => setTimeout(r, 500));
         console.log("waiting on data")
       }
-      // while (props.messageABI.current.signer === null) {
+      // while (messageABI.current.signer === null) {
       //   await new Promise((r) => setTimeout(r, 500));
       //   console.log("waiting on signer")
       // }
@@ -218,24 +244,24 @@ export default function Home(props) {
   //@deprecated
   const sync = async () => {
     let _myMessages = [];
-    if (props.messageABI.current !== null) {
-      while (props.messageABI.current.signer === null) {
+    if (messageABI.current !== null) {
+      while (messageABI.current.signer === null) {
         console.log("waiting");
         await new Promise((r) => setTimeout(r, 500));
       }
-      props.messageABI.current.removeAllListeners();
+      messageABI.current.removeAllListeners();
       console.log("syncing");
       const lastBlock = await props.provider.getBlock();
       const lastBlocknumber = lastBlock.number;
       console.log("lastBlock", lastBlocknumber);
       let i = lastBlocknumber;
       while (i > CONTRACT_CREATION_BLOCK) {
-        if (props.messageABI.current.signer !== null) {
+        if (messageABI.current.signer !== null) {
           let end = i - 1000;
           if (i - 1000 < CONTRACT_CREATION_BLOCK) {
             end = CONTRACT_CREATION_BLOCK;
           }
-          const allEvents = await props.messageABI.current.queryFilter(
+          const allEvents = await messageABI.current.queryFilter(
             "NewMessage",
             end,
             i
@@ -280,7 +306,6 @@ export default function Home(props) {
         </div>
       </div>
     <div>
-      {liveData}
     <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
              marginRight:"auto",
