@@ -77,7 +77,7 @@ export default function MessageOptions(props) {
                 
                 sx={{
                   fontSize: "0.7rem",
-                  color: "white",
+                  color: props.messageType === "event" ? "#1876D1" : "white",
                   borderColor: "white",
                 }}
               >
@@ -90,7 +90,7 @@ export default function MessageOptions(props) {
                 size="small"
                 sx={{
                   fontSize: "0.7rem",
-                  color: "white",
+                  color: props.messageType === "saved" ? "#1876D1" : "white",
                   borderColor: "white",
                 }}
               >
@@ -103,7 +103,7 @@ export default function MessageOptions(props) {
                 size="small"
                 sx={{
                   fontSize: "0.7rem",
-                  color: "white",
+                  color: props.messageType === "nft" ? "#1876D1" : "white",
                   borderColor: "white",
                 }}
               >
