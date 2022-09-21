@@ -39,22 +39,27 @@ export default function ConvoList(props) {
   console.log("ConvoList type", typeof myConvos);
   console.log("ConvoList length", Object.entries(myConvos));
   return (
-   
-    
+   <div>
+   <div style={{width:"100%"}}>
+   <StartNewConvo handleOpen={props.handleOpen}/>
+   </div>
     <Box
       sx={{
         width: "100%",
-        height: "580px",
+        height: "530px",
         padding: "2px",
         borderRadius: "9px",
         borderWidth: "5px",
         backgroundColor: "#55d",
+        overflowY: "scroll",
+        overflow: "scroll",
+        
+
         
       }}
     > 
-    <StartNewConvo handleOpen={props.handleOpen}/>
     
-    <div style={{overflow: "scroll"}}>
+    <div style={{overflow: "scroll", display:"flex", flexDirection:"column-reverse"}}>
       {Object.entries(myConvos).length > 0 ? (
         Object.entries(myConvos).map(([bob, convo]) => {
           console.log("bob, convo", bob, convo);
@@ -98,6 +103,6 @@ export default function ConvoList(props) {
       )}
       </div>
     </Box>
-    
+    </div>
   );
 }
