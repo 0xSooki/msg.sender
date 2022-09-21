@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import {useLazyQuery} from "@apollo/client";
 import { useQuery } from 'urql'
 import { useContract } from 'wagmi'
+import GetPublicKeyModal from "./GetPublicKeyModal";
 
 import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
@@ -35,6 +36,11 @@ export default function Home(props) {
   const [bobsPubKeyX, setPubKeyX] = useState(null);
   const [bobsPubKeyYodd, setPubKeyYodd] = useState(null);
   const [synced, setSynced] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+      setOpen(false);
+  }
   const messageABI = useRef(useContract({
     addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
     contractInterface: contractABI.abi,
@@ -314,8 +320,12 @@ export default function Home(props) {
     <div display="block">
       <div style={{display:"table", clear:"both", width:"100%"}}>
         <div style={{float:"left", width: "40%"}}>
+          <GetPublicKeyModal 
+              open={open} handleClose={handleClose} setSelectedConvo={setSelectedConvo}
+              setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}/>
         <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
                     setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
+                    handleOpen={handleOpen}
               />
             </div>
         <div style={{float:"right", width: "60%"}}>

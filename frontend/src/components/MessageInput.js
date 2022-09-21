@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 import { TextField } from '@mui/material';
 import hex_to_ascii from "../logic/helpers";
 import { useContract } from 'wagmi'
+import {getPubKey} from "../logic/Ecnryption"
 import InputAdornment from '@mui/material/InputAdornment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
@@ -18,7 +19,7 @@ export default function MessageInput(props){
     const [pubkeyX,setPubKeyX] = useState(0n);
     const [pubkeyYodd,setPubkeyYodd] = useState(false);
     const [myMessage, setMyMessage] = useState([]);
-    const [bobsPubKey, setBobsPubKey] = useState("");
+    const bobsPubKey= useRef("");
     const [secret, setSecret] = useState("");
     const iv = useRef([]);
     const cipherText = useRef("");
@@ -45,7 +46,7 @@ export default function MessageInput(props){
     const sendMessage = async () => {
         const option = messageType==="saved"?2:messageType==="nft"?3:1;
         if(encryptedMessage){
-            if (!bobsPubKey){
+            if (!bobsPubKey.current){
                 await getBobsPubKey();
             }
             //computeSecret();
@@ -93,17 +94,17 @@ export default function MessageInput(props){
     }
 
     const computeSecret = () => {
-        if(bobsPubKey && props.privKey.length>0){
+        if(bobsPubKey.current && props.privKey.length>0){
             const key = crypto.createECDH('secp256k1')
             key.setPrivateKey(props.privKey);
-            const _secret = key.computeSecret(ethers.utils.arrayify(bobsPubKey), null)
+            const _secret = key.computeSecret(ethers.utils.arrayify(bobsPubKey.current), null)
             console.log(_secret);
             setSecret(_secret);
             return _secret;
         }else{
             console.log("there is no pubkey or privkey")
             console.log("props.privKey",props.privKey)
-            console.log("bobsPubKey",bobsPubKey)
+            console.log("bobsPubKey.current",bobsPubKey)
             return false;
         }
     }
@@ -134,13 +135,28 @@ export default function MessageInput(props){
 
     const getBobsPubKey = async(event) => {
         let compressed = "";
-        const x = BigInt(props.pubkeyX)
-        if(!props.pubkeyYodd){
-            compressed = "0x02" + x.toString(16);
+        if (props.pubkeyX){
+            const x = BigInt(props.pubkeyX)
+            if(!props.pubkeyYodd){
+                compressed = "0x02" + x.toString(16);
+            }else{
+                compressed = "0x03" + x.toString(16);
+            }
         }else{
-            compressed = "0x03" + x.toString(16);
-        }
-        setBobsPubKey(compressed) 
+            const lastBlock = await props.provider.getBlock();
+            const lastBlocknumber = lastBlock.number;
+            const recoveredPubKey = await getPubKey(lastBlocknumber, props.bobsAddress);
+            const x =  BigInt("0x" + recoveredPubKey.slice(4,68));
+            const y = BigInt("0x" + recoveredPubKey.slice(68));
+            console.log("x",x.toString(16),"y",y.toString(16));
+            if(y%2n === 0n){
+                compressed = "0x02" + x.toString(16)
+            }else{
+                compressed = "0x03" + x.toString(16);
+            }
+         }
+        
+        bobsPubKey.current = compressed;
         return;
     }
     return(

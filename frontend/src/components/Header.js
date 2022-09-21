@@ -16,7 +16,7 @@ export default function Header(props) {
   return (
     <div
       style={{
-        backgroundColor: "#78f",
+        backgroundColor: "#10104f",
         height: "45px",
         alignItems: "center",
         display: "flex",
