@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
+import StartNewConvo from "./StartNewConvo";
 
 export default function ConvoList(props) {
   const [myConvos, setConvos] = useState({});
@@ -38,6 +39,8 @@ export default function ConvoList(props) {
   console.log("ConvoList type", typeof myConvos);
   console.log("ConvoList length", Object.entries(myConvos));
   return (
+   
+    
     <Box
       sx={{
         width: "100%",
@@ -46,9 +49,12 @@ export default function ConvoList(props) {
         borderRadius: "9px",
         borderWidth: "5px",
         backgroundColor: "#55d",
-        overflow: "scroll",
+        
       }}
-    >
+    > 
+    <StartNewConvo handleOpen={props.handleOpen}/>
+    
+    <div style={{overflow: "scroll"}}>
       {Object.entries(myConvos).length > 0 ? (
         Object.entries(myConvos).map(([bob, convo]) => {
           console.log("bob, convo", bob, convo);
@@ -90,6 +96,8 @@ export default function ConvoList(props) {
       ) : (
         <p>No conversations</p>
       )}
+      </div>
     </Box>
+    
   );
 }

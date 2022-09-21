@@ -20,3 +20,10 @@ Blockchain-Native Messaging app
 
 - Add pop up for transaction processing time.
 
+## Last-week priorities
+
+- Money-transfer mechanism.
+
+- NFT visual and functional design.
+
+
