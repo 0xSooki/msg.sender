@@ -25,7 +25,9 @@ export default function MessageOptions(props) {
         borderRadius: "0.7rem",
       }}
     >
-    <Tooltip title="You can send your message encrypted, or NOT encrypted. Encryption will gurantee the absolute privacy of your message, and will allow you to send money as an incentive for the recepient to read your content. However, you need to enter your private key into the app for the encryption to be possible.">
+    <Tooltip title={props.privKey.length>0?
+        "You can send your message encrypted, or NOT encrypted. Encryption will guarantee the absolute privacy of your message, and will allow you to send money as an incentive for the recipient to read your content.":
+        "To enable encrypted messages you need to enter your private key first. Encrypted messages will guarantee the privacy of your communications strictly between you and the recipient."}>
       <div
         style={{
           display: "block",
@@ -39,6 +41,7 @@ export default function MessageOptions(props) {
         </div>
         
         <Switch
+          disabled={props.privKey.length>0?false:true}
           checked={props.encryptedMessage}
           onChange={handleEncrypted}
           color={"secondary"}

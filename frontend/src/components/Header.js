@@ -4,6 +4,8 @@ import SendIcon from "@mui/icons-material/Send";
 import { NavLink } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { display } from "@mui/system";
+import KeyIcon from '@mui/icons-material/Key';
+import KeyOffIcon from '@mui/icons-material/KeyOff';
 
 export default function Header(props) {
   const barItem = {
@@ -70,6 +72,9 @@ export default function Header(props) {
           flexGrow: "1",
         }}
       />
+      <div style={{marginLeft:"1rem", marginRight:"1rem"}}>{props.privKey.length>0?
+          <KeyIcon color="success" fontSize="large" sx={{backgroundColor:"#afd", padding:"0.1rem", borderRadius:"2rem"}}/>:
+          <KeyOffIcon color="disabled" fontSize="large" sx={{backgroundColor:"#999", padding:"0.1rem", borderRadius:"2rem"}}/>}</div>
       <div
         style={{
           display: "inline-block",

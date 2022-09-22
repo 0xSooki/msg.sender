@@ -15,6 +15,15 @@ export default function GetPublicKeyModal(props) {
     const [error, setError] = useState(false);
     const provider = useProvider()
 
+    useEffect( () => {
+        if(!props.open){
+            setBobsAddress("")
+            setWaiting(false)
+            setError(false)
+        }
+
+    },[props.open])
+
     
     const handleAddress = async(event) => {
         setBobsAddress(event.target.value);

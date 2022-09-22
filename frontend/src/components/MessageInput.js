@@ -9,6 +9,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { ethers } from "ethers";
 import MessageOptions from './MessageOptions';
 import SendIcon from '@mui/icons-material/Send';
+import TransactionPopup from "./TransactionPopup"
 
 const crypto = require('crypto-browserify');
 const contractABI = require("../abi/SenderMessage.json");
@@ -24,7 +25,20 @@ export default function MessageInput(props){
     const iv = useRef([]);
     const cipherText = useRef("");
     const [messageType, setMessageType] = useState("event");
-    const [encryptedMessage, setEncryptedMessage] = useState(true);
+    const [encryptedMessage, setEncryptedMessage] = useState(false);
+    const [txModalOpen, setTxModalOpen] = React.useState(false);
+    const handleTxModalOpen = () => setTxModalOpen(true);
+    const [txWaiting, setWaiting] = useState(false);
+    const [txSuccess, setSuccess] = useState(false);
+    const [txError, setError] = useState(false);
+    const [txHash, setTxHash] = useState(false);
+    const handleTxModalClose = () => {
+        setTxHash("")
+        setError(false)
+        setSuccess(false)
+        setWaiting(false)
+        setTxModalOpen(false);
+    }
     const messageABI = useRef(useContract({
         addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
         contractInterface: contractABI.abi,
@@ -36,8 +50,11 @@ export default function MessageInput(props){
         if(props.pubkeyX){
             getBobsPubKey();
         }
+        if(props.privKey.length>0){
+            setEncryptedMessage(true);
+        }
         
-    },[props.pubkeyX, props.pubkeyYodd]);
+    },[props.pubkeyX, props.pubkeyYodd, props.privKey]);
 
     const handleMessage = (event) => {
         setMyMessage(event.target.value);
@@ -67,13 +84,20 @@ export default function MessageInput(props){
             console.log(iv.current)
             messageABI.current.sendCipherText(cipherText.current,x, odd, iv.current, props.bobsAddress, option)
             .then(async (_txHash) => {
+                setTxHash(_txHash.hash)
+                setWaiting(true)
+                handleTxModalOpen();
                 console.log(_txHash);
                 _txHash.wait().then(receipt => {
+                    setWaiting(false)
+                    setSuccess(true)
                     setMyMessage("");
                     cipherText.current="";
                     console.log("tx mined: ", receipt);               
                 } )
                 .catch((error) => {
+                    setWaiting(false)
+                    setError(true)
                 console.log(error);
                 });
             });
@@ -161,8 +185,14 @@ export default function MessageInput(props){
     }
     return(
         <div style={{display:"flex", backgroundColor:"#e5e9f2"}}>
+            <TransactionPopup
+                txModalOpen={txModalOpen} handleTxModalClose={handleTxModalClose}
+                txWaiting={txWaiting} txHash={txHash} txSuccess={txSuccess} 
+                txError={txError}
+            />
             <MessageOptions setMessageType={setMessageType} setEncryptedMessage={setEncryptedMessage}
-                                messageType={messageType} encryptedMessage={encryptedMessage}/>
+                                messageType={messageType} encryptedMessage={encryptedMessage}
+                                privKey={props.privKey}/>
             <div style={{display:"flex", minWidth:"50%", maxWidth:"100%", marginLeft:"2vw"}}> 
             <TextField
             sx={{ marginLeft: 'auto',
