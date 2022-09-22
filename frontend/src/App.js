@@ -106,7 +106,7 @@ console.log(messageABI.current)
       <ApolloProvider client={client}>
       {/* <Provider value={clientUrql}> */}
       <HashRouter>
-      <Header />
+      <Header privKey={privKey} />
         <Routes>
           <Route exact path="/" 
                  element={ 

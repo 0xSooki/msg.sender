@@ -1,12 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
 import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
 
 export default function StartNewConvo(props) {
-
-  const  openNewConvo = () => {
-    console.log("clicked on new convo")
-  }
   
   return (
     <div
