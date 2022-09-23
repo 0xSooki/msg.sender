@@ -19,17 +19,20 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
         address from;
         uint value;
         uint8 eventSavedOrNft;
+        uint blockN;
+        uint inReplyOf;
+        uint balance;
+        bool replied;
     }
 
     uint public index = 0;
 
-    mapping(address => uint) private balance;
-
     mapping (uint => Message) message;
     address authorized;
 
-    event Withdrawal(address indexed user, uint amount);
-    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, uint8 eventSavedOrNft, uint amount);
+    event Withdrawal( uint indexed msgId, uint amount);
+    event WithdrawalUnclaimed( uint indexed msgId, uint amount);
+    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, uint8 eventSavedOrNft, uint amount, uint blockNumber);
 
     constructor() ERC721("Message", "MSG"){ }
 
@@ -57,11 +60,23 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
                 super.supportsInterface(interfaceId);
     }
 
-    function sendCipherText(bytes memory cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, address to, uint8 eventSavedOrNft) external payable {
+    function sendCipherText(bytes memory cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, address to, uint8 eventSavedOrNft, uint inReplyOf) external payable {
         //id must never be 0
         uint _id = index += 1;
+        uint blockN = block.number;
+        if(inReplyOf>0){
+            require(to == message[inReplyOf].from, "Replying to wrong address");
+            require(_msgSender() == message[inReplyOf].to, "Replying from wrong address");
+            message[inReplyOf].replied = true;
+        }if (msg.value > 0){
+            require(eventSavedOrNft>1,"Messages with payments need to be stored in the contract");
+        }
 
         if (eventSavedOrNft > 1){
+            if (msg.value > 0){
+                message[_id].from = _msgSender();
+                message[_id].balance += msg.value;
+            }
             message[_id].cipherText = cipherText;
             message[_id].encrypted = true;
             message[_id].pubkeyX = pubkeyX;
@@ -70,35 +85,49 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
             message[_id].iv = iv;
             message[_id].to = to;
             message[_id].value = msg.value;
+            message[_id].blockN = blockN;
             if(eventSavedOrNft > 2){
                // the NFT goes to the receiver
                 super._mint(to, _id);
             }
         }
         
-        balance[to] += msg.value;
-        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value);
+        
+        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value, blockN);
         //return _id;
     }
 
-    function sendPlainText(bytes memory plainText, uint8 eventSavedOrNft, address to) external payable {
+    function sendPlainText(bytes memory plainText, uint8 eventSavedOrNft, address to,  uint inReplyOf) external payable {
         //id must never be 0
         uint _id = index += 1;
+        uint blockN = block.number;
+
+        if(inReplyOf>0){
+            require(to == message[inReplyOf].from,"Replying to wrong address");
+            require(_msgSender() == message[inReplyOf].to, "Replying from wrong address");
+            message[inReplyOf].replied = true;
+        }if (msg.value > 0){
+            require(eventSavedOrNft>1,"Messages with messages need to be stored in the contract");
+        }
+
 
         if (eventSavedOrNft > 1){
+            if (msg.value > 0){
+                message[_id].from = _msgSender();
+                message[_id].balance += msg.value;
+            }
             message[_id].cipherText = plainText;
             message[_id].encrypted = false;
             message[_id].from = _msgSender();
             message[_id].to = to;
             message[_id].value = msg.value;
+            message[_id].blockN = blockN;
             if(eventSavedOrNft > 2){
                // the NFT goes to the receiver
                 super._mint(to, _id);
             }
         }
-        
-        balance[to] += msg.value;
-        emit NewMessage(_msgSender(), to, _id, plainText, 0, false,  0,  eventSavedOrNft, msg.value);
+        emit NewMessage(_msgSender(), to, _id, plainText, 0, false,  0,  eventSavedOrNft, msg.value, blockN);
         //return _id;
     }
 
@@ -106,16 +135,32 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
         return  message[msgId];
     }
 
-    function withdraw(uint amount) external {
+    function withdraw(uint amount, uint msgId) external {
         address user = _msgSender();
-        require(balance[user] >= amount, "Not enough balance");
-        balance[user] -= amount;
+        require(message[msgId].balance >= amount, "Not enough balance");
+        require(message[msgId].replied, "You need to reply before claiming payment");
+        
+        message[msgId].balance -= amount;
         payable(user).transfer(amount);
-        emit Withdrawal(user, amount);
+        emit Withdrawal(msgId, amount);
     }
 
-    function userBalance(address user) external view returns(uint){
-        return balance[user];
+    function msgBalance(uint msgId) external view returns(uint){
+        return message[msgId].balance;
+    }
+
+    function hasBeenReplied(uint msgId) external view returns(bool){
+        return message[msgId].replied;
+    }
+
+    function getUnclaimedPayment(uint msgId, uint amount ) external {
+        address user = _msgSender();
+        require(message[msgId].from == user,"You are not the sender of this message");
+        require(block.number > (message[msgId].blockN + 6), "Too soon to claim. Wait for at least 1 month.");
+        require(message[msgId].balance >= amount, "Not enough balance");
+        message[msgId].balance -= amount;
+        payable(user).transfer(amount);
+        emit WithdrawalUnclaimed(msgId, amount);
     }
 
      
