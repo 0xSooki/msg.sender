@@ -19,7 +19,7 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
         address from;
         uint value;
         uint8 eventSavedOrNft;
-        bytes8 code;
+        uint blockN;
     }
 
     struct Payment {
@@ -32,14 +32,14 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
 
     uint public index = 0;
 
-    mapping(address => mapping(bytes8 => Payment)) private payment;
+    mapping(address => mapping(uint => Payment)) private payment;
 
     mapping (uint => Message) message;
     address authorized;
 
-    event Withdrawal(address indexed user, bytes8 code, uint amount);
-    event WithdrawalUnclaimed(address indexed user, bytes8 code, uint amount);
-    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, uint8 eventSavedOrNft, uint amount, bytes8 code, bool hasToReply);
+    event Withdrawal(address indexed user, uint msgId, uint amount);
+    event WithdrawalUnclaimed(address indexed user, uint msgId, uint amount);
+    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, uint8 eventSavedOrNft, uint amount, bool hasToReply, uint blockNumber);
 
     constructor() ERC721("Message", "MSG"){ }
 
@@ -67,20 +67,23 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
                 super.supportsInterface(interfaceId);
     }
 
-    function sendCipherText(bytes memory cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, address to, uint8 eventSavedOrNft, bytes8 code, bool hasToReply, uint8 inReplyOf) external payable {
+    function sendCipherText(bytes memory cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, address to, uint8 eventSavedOrNft, bool hasToReply, uint inReplyOf) external payable {
         //id must never be 0
         uint _id = index += 1;
+        uint blockN = block.number;
         if(inReplyOf>0){
-            payment[_msgSender()][code].replied = true;
+            require(to == message[inReplyOf].from);
+            payment[_msgSender()][inReplyOf].replied = true;
+        }if (msg.value > 0){
+            require(eventSavedOrNft>1,"Messages with payments need to be stored in the contract");
         }
 
         if (eventSavedOrNft > 1){
             if (msg.value > 0){
-                require(code.length > 8);
-                payment[to][code].blockN = block.number;
-                payment[to][code].from = _msgSender();
-                payment[to][code].hasToReply = hasToReply;
-                payment[to][code].balance += msg.value;
+                payment[to][_id].blockN = blockN;
+                payment[to][_id].from = _msgSender();
+                payment[to][_id].hasToReply = hasToReply;
+                payment[to][_id].balance += msg.value;
             }
             message[_id].cipherText = cipherText;
             message[_id].encrypted = true;
@@ -90,7 +93,7 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
             message[_id].iv = iv;
             message[_id].to = to;
             message[_id].value = msg.value;
-            message[_id].code = code;
+            message[_id].blockN = blockN;
             if(eventSavedOrNft > 2){
                // the NFT goes to the receiver
                 super._mint(to, _id);
@@ -98,37 +101,39 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
         }
         
         
-        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value, code, hasToReply);
+        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value, hasToReply, blockN);
         //return _id;
     }
 
-    function sendPlainText(bytes memory plainText, uint8 eventSavedOrNft, address to, bytes8 code, bool hasToReply, uint8 inReplyOf) external payable {
+    function sendPlainText(bytes memory plainText, uint8 eventSavedOrNft, address to, bool hasToReply, uint inReplyOf) external payable {
         //id must never be 0
         uint _id = index += 1;
+        uint blockN = block.number;
 
         if(inReplyOf>0){
-            payment[_msgSender()][code].replied = true;
+            require(to == message[inReplyOf].from,"Replying to wrong address");
+            payment[_msgSender()][inReplyOf].replied = true;
         }
 
         if (eventSavedOrNft > 1){
             if (msg.value > 0){
-                require(code.length > 8);
-                payment[to][code].blockN = block.number;
-                payment[to][code].from = _msgSender();
-                payment[to][code].hasToReply = hasToReply;
-                payment[to][code].balance += msg.value;
+                payment[to][_id].blockN = blockN;
+                payment[to][_id].from = _msgSender();
+                payment[to][_id].hasToReply = hasToReply;
+                payment[to][_id].balance += msg.value;
             }
             message[_id].cipherText = plainText;
             message[_id].encrypted = false;
             message[_id].from = _msgSender();
             message[_id].to = to;
             message[_id].value = msg.value;
+            message[_id].blockN = blockN;
             if(eventSavedOrNft > 2){
                // the NFT goes to the receiver
                 super._mint(to, _id);
             }
         }
-        emit NewMessage(_msgSender(), to, _id, plainText, 0, false,  0,  eventSavedOrNft, msg.value, code, hasToReply);
+        emit NewMessage(_msgSender(), to, _id, plainText, 0, false,  0,  eventSavedOrNft, msg.value, hasToReply, blockN);
         //return _id;
     }
 
@@ -136,29 +141,29 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
         return  message[msgId];
     }
 
-    function withdraw(uint amount, bytes8 code) external {
+    function withdraw(uint amount, uint msgId) external {
         address user = _msgSender();
-        require(payment[user][code].balance >= amount, "Not enough balance");
-        if(payment[user][code].hasToReply){
-            require(payment[user][code].replied, "You need to reply before claiming payment");
+        require(payment[user][msgId].balance >= amount, "Not enough balance");
+        if(payment[user][msgId].hasToReply){
+            require(payment[user][msgId].replied, "You need to reply before claiming payment");
         }
-        payment[user][code].balance -= amount;
+        payment[user][msgId].balance -= amount;
         payable(user).transfer(amount);
-        emit Withdrawal(user, code, amount);
+        emit Withdrawal(user, msgId, amount);
     }
 
-    function userBalance(address user, bytes8 code) external view returns(uint){
-        return payment[user][code].balance;
+    function userBalance(address user, uint msgId) external view returns(uint){
+        return payment[user][msgId].balance;
     }
 
-    function getUnclaimedPayment(address to, bytes8 code, uint amount ) external {
+    function getUnclaimedPayment(address to, uint msgId, uint amount ) external {
         address user = _msgSender();
-        require(payment[to][code].from == user,"You are not the sender of this message");
-        require(block.number > (payment[to][code].blockN + 1150000), "Too soon to claim. Wait for at least 1 month.");
-        require(payment[user][code].balance >= amount, "Not enough balance");
-        payment[user][code].balance -= amount;
+        require(payment[to][msgId].from == user,"You are not the sender of this message");
+        require(block.number > (payment[to][msgId].blockN + 1150000), "Too soon to claim. Wait for at least 1 month.");
+        require(payment[user][msgId].balance >= amount, "Not enough balance");
+        payment[user][msgId].balance -= amount;
         payable(user).transfer(amount);
-        emit WithdrawalUnclaimed(user, code, amount);
+        emit WithdrawalUnclaimed(user, msgId, amount);
     }
 
      
