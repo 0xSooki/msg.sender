@@ -32,7 +32,17 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
 
     event Withdrawal( uint indexed msgId, uint amount);
     event WithdrawalUnclaimed( uint indexed msgId, uint amount);
-    event NewMessage(address indexed from, address indexed to, uint indexed msgId, bytes cipherText, uint pubkeyX, bool pubkeyYodd, uint128 iv, uint8 eventSavedOrNft, uint amount, uint blockNumber);
+    event NewMessage(address indexed from, 
+                    address indexed to, 
+                    uint indexed msgId, 
+                    bytes cipherText, 
+                    uint pubkeyX, 
+                    bool pubkeyYodd, 
+                    uint128 iv, 
+                    uint8 eventSavedOrNft, 
+                    uint amount, 
+                    uint inReplyOf,
+                    uint blockNumber);
 
     constructor() ERC721("Message", "MSG"){ }
 
@@ -93,7 +103,7 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
         }
         
         
-        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value, blockN);
+        emit NewMessage(_msgSender(), to, _id, cipherText, pubkeyX, pubkeyYodd,  iv,  eventSavedOrNft, msg.value, inReplyOf, blockN);
         //return _id;
     }
 
@@ -127,7 +137,7 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
                 super._mint(to, _id);
             }
         }
-        emit NewMessage(_msgSender(), to, _id, plainText, 0, false,  0,  eventSavedOrNft, msg.value, blockN);
+        emit NewMessage(_msgSender(), to, _id, plainText, 0, false,  0,  eventSavedOrNft, msg.value, inReplyOf, blockN);
         //return _id;
     }
 
@@ -156,7 +166,8 @@ contract SenderMessage is ERC721Enumerable, ERC721Burnable, Pausable, Ownable{
     function getUnclaimedPayment(uint msgId, uint amount ) external {
         address user = _msgSender();
         require(message[msgId].from == user,"You are not the sender of this message");
-        require(block.number > (message[msgId].blockN + 6), "Too soon to claim. Wait for at least 1 month.");
+        //PRODUCTION VALUE: 1150000 !!!!
+        require(block.number > (message[msgId].blockN + 200), "Too soon to claim. Wait for at least 1 month.");
         require(message[msgId].balance >= amount, "Not enough balance");
         message[msgId].balance -= amount;
         payable(user).transfer(amount);
