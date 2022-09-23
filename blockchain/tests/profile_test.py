@@ -74,7 +74,10 @@ def test_message():
                             {'from': accounts[i], "gas_price": "auto"})
         print(f"minting transaction from {accounts[i]} to {accounts[i+1]}: ",tx.info())
         
-    message_contract.getUnclaimedPayment(3, 5000000000000, {'from': accounts[1]})
     for i in range(1,5):
         print(message_contract.getMessage(i))   
+
+    for i in range(1,12):
+        print(message_contract.hasBeenReplied(i))   
+    message_contract.getUnclaimedPayment(3, 5000000000000, {'from': accounts[1]})
     assert True == False

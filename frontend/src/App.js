@@ -1,11 +1,10 @@
 
-import {Routes, Route, HashRouter} from 'react-router-dom';
+import {Routes, Route, HashRouter} from 'react-router-dom'
 import './App.css';
-import Connect from './components/connect';
-import Home from './components/home';
-import SendMessage from "./components/SendMessage";
+import Connect from './components/connect'
+import Home from './components/home'
+import SendMessage from "./components/SendMessage"
 import Header from "./components/Header";
-import Footer from "./components/Footer";
 import { ethers } from "ethers";
 import React, { useEffect, useState, useRef } from "react";
 import {ApolloClient, InMemoryCache, ApolloProvider, HttpLink, from} from "@apollo/client";
@@ -129,7 +128,6 @@ console.log(messageABI.current)
                     setPrivateKey={(_privKey) => setPrivateKey(_privKey)}
                     connectWallet={connectWallet}/>} />
         </Routes>
-        <Footer />
       </HashRouter>
       {/* </Provider> */}
       </ApolloProvider>

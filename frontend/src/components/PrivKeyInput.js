@@ -31,7 +31,7 @@ export default function PrivKeyInput(props){
     
     return (
 
-      <div style={{height:"auto",textAlign:"center",display:"block"}}>
+      <div style={{height:"100vh",textAlign:"center",display:"block"}}>
       <TextField
                 sx={{ marginLeft: 'auto',
                     marginRight: 'auto',
