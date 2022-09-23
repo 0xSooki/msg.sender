@@ -51,19 +51,18 @@ export default function Convo(props){
       }
 
     return(
-        <div className="overflow-auto">
-            <div className = "col-12"
-            style={{backgroundColor:"#30306fde", padding:"1em", margin:"0.25%",
-                        color:"white", zIndex:"3", alignContent:"center",
+        <div>
+            <div style={{backgroundColor:"#30306fde", padding:"1%", position:"absolute",
+                       width:"100%", color:"white", zIndex:"3", alignContent:"center",
                        alignItems:"center", borderRadius:"0.5rem"}}>
-                <p style={{fontWeight:"700", marginLeft:"auto", marginRight:"auto"}}>Conversation with {props.selectedConvo}</p>
+                <p style={{fontWeight:"700", marginLeft:"auto", marginRight:"0", paddingLeft:"9vw"}}>Conversation with {props.selectedConvo}</p>
             </div>
-         <Box sx={{height:"28em", padding:"1%", overflow:"scroll", 
+        <Box sx={{width:"100%",  height:"480px", padding:"15px", overflow:"scroll", 
             borderWidth:"5px", borderColor:"#aad", borderRadius:"9px",
             display:"flex", flexDirection:"column-reverse"  }}>
                 
             
-        <div>
+            <div>
             {messages?
             messages.length>0?
             messages.map((message) => {
