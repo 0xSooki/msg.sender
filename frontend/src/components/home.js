@@ -22,10 +22,10 @@ const contractABI = require("../abi/SenderMessage.json");
 
 export default function Home(props) {
 
-  // const [result, reexecuteQuery] = useQuery({
-  //   query: LISTEN_TO_NEW_MESSAGES,
-  //   variables: {user: props.myAddress.toLowerCase(), last: 10},
-  // })
+  const [result, reexecuteQuery] = useQuery({
+    query: LISTEN_TO_NEW_MESSAGES,
+    variables: {user: props.myAddress.toLowerCase(), last: 10},
+  })
 
   
   const navigate = useNavigate();
@@ -270,65 +270,67 @@ export default function Home(props) {
   }
 
   //@deprecated
-  const sync = async () => {
-    let _myMessages = [];
-    if (messageABI.current !== null) {
-      while (messageABI.current.signer === null) {
-        console.log("waiting");
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      messageABI.current.removeAllListeners();
-      console.log("syncing");
-      const lastBlock = await props.provider.getBlock();
-      const lastBlocknumber = lastBlock.number;
-      console.log("lastBlock", lastBlocknumber);
-      let i = lastBlocknumber;
-      while (i > CONTRACT_CREATION_BLOCK) {
-        if (messageABI.current.signer !== null) {
-          let end = i - 1000;
-          if (i - 1000 < CONTRACT_CREATION_BLOCK) {
-            end = CONTRACT_CREATION_BLOCK;
-          }
-          const allEvents = await messageABI.current.queryFilter(
-            "NewMessage",
-            end,
-            i
-          );
-          console.log(allEvents);
-          let sortedPosts = [...allEvents];
-          sortedPosts.reverse();
-          const filtered = sortedPosts.filter(
-            (_event) =>
-              _event.args[1].toLowerCase() === props.myAddress.toLowerCase()
-          );
-          console.log(filtered);
-          _myMessages = [].concat(_myMessages, filtered);
-          console.log(_myMessages);
-          setMyMessages(_myMessages);
-          i -= 1000;
-        }
-      }
-      startListening();
-      return;
-    }
-  };
+  // const sync = async () => {
+  //   let _myMessages = [];
+  //   if (messageABI.current !== null) {
+  //     while (messageABI.current.signer === null) {
+  //       console.log("waiting");
+  //       await new Promise((r) => setTimeout(r, 500));
+  //     }
+  //     messageABI.current.removeAllListeners();
+  //     console.log("syncing");
+  //     const lastBlock = await props.provider.getBlock();
+  //     const lastBlocknumber = lastBlock.number;
+  //     console.log("lastBlock", lastBlocknumber);
+  //     let i = lastBlocknumber;
+  //     while (i > CONTRACT_CREATION_BLOCK) {
+  //       if (messageABI.current.signer !== null) {
+  //         let end = i - 1000;
+  //         if (i - 1000 < CONTRACT_CREATION_BLOCK) {
+  //           end = CONTRACT_CREATION_BLOCK;
+  //         }
+  //         const allEvents = await messageABI.current.queryFilter(
+  //           "NewMessage",
+  //           end,
+  //           i
+  //         );
+  //         console.log(allEvents);
+  //         let sortedPosts = [...allEvents];
+  //         sortedPosts.reverse();
+  //         const filtered = sortedPosts.filter(
+  //           (_event) =>
+  //             _event.args[1].toLowerCase() === props.myAddress.toLowerCase()
+  //         );
+  //         console.log(filtered);
+  //         _myMessages = [].concat(_myMessages, filtered);
+  //         console.log(_myMessages);
+  //         setMyMessages(_myMessages);
+  //         i -= 1000;
+  //       }
+  //     }
+  //     startListening();
+  //     return;
+  //   }
+  // };
   console.log("convos",convos);
   console.log("selectedConvo",selectedConvo);
   
-  return (
-    
+  return ( 
+  <div className="container">
     <div display="block">
-      <div style={{display:"table", clear:"both", width:"100%"}}>
-        <div style={{float:"left", width: "40%"}}>
+      <div className="row">
+        <div className="col-4">
           <GetPublicKeyModal 
               open={open} handleClose={handleClose} setSelectedConvo={setSelectedConvo}
               setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}/>
-        <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
+          <div>
+          <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
                     setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
                     handleOpen={handleOpen}
               />
-            </div>
-        <div style={{float:"right", width: "60%"}}>
+          </div>
+        </div>
+        <div display="flex" className="col-8">
           <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} 
                 selectedConvo={selectedConvo} pubkeyYodd={bobsPubKeyYodd}
                 pubkeyX={bobsPubKeyX} privKey={props.privKey}/>
@@ -337,8 +339,8 @@ export default function Home(props) {
                         bobsAddress={selectedConvo}/>
         </div>
       </div>
-    <div>
-    <Button variant="contained" color="success" sx ={{
+      <div className="container">
+      <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
              marginRight:"auto",
              marginTop:"auto",
@@ -350,10 +352,9 @@ export default function Home(props) {
             Sync past messages
             </Button>
 
-    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey) }/>
-   
-
+      <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey) }/>
+      </div>
     </div>
-    </div>
+  </div>
   );
 }
