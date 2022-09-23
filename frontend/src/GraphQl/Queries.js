@@ -31,10 +31,10 @@ query myMessages($user: String!) {
 `
 
 const LISTEN_TO_NEW_MESSAGES = gql`
-query myNewMessages($user: String!){
+query myNewMessages($user: String!) @live(interval: 3000){
 
-  Sent:messages(where: 
-        {from: $user}, last: 5
+  Sent:messages(last: 10, where: 
+        {from: $user}, 
   ) {
     id
     from
@@ -45,8 +45,8 @@ query myNewMessages($user: String!){
     iv
     eventSavedOrNft
   }
-  Received: messages(where: 
-        {to: $user}, last: 5
+  Received: messages(last: 10, where: 
+        {to: $user}, 
   ) {
     id
     from

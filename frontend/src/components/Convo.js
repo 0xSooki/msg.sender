@@ -14,11 +14,13 @@ const crypto = require('crypto-browserify');
 export default function Convo(props){
 
     const [messages,setMessages] = useState([]);
-
+    const [reversed, setReversed] = useState(false);
+   
     useEffect(()=>{
         setMessages([])
-        setMessages([])
         setMessages(props.messages)
+            
+        
         console.log("ConvoComponent", props.messages)
     },[messages, props.selectedConvo]);
 
@@ -43,14 +45,25 @@ export default function Convo(props){
             return message;
         }catch(e){
             console.log("issue decrypting own message", e)
-            return cipherText;
+            return hex_to_ascii(cipherText);
         }
        
       }
 
     return(
-        <Box sx={{width:"100%",  height:"480px", padding:"15px", overflow:"scroll", 
-            borderWidth:"5px", borderColor:"#aad", borderRadius:"9px" }}>
+        <div className="overflow-auto">
+            <div className = "col-12"
+            style={{backgroundColor:"#30306fde", padding:"1em", margin:"0.25%",
+                        color:"white", zIndex:"3", alignContent:"center",
+                       alignItems:"center", borderRadius:"0.5rem"}}>
+                <p style={{fontWeight:"700", marginLeft:"auto", marginRight:"auto"}}>Conversation with {props.selectedConvo}</p>
+            </div>
+         <Box sx={{height:"28em", padding:"1%", overflow:"scroll", 
+            borderWidth:"5px", borderColor:"#aad", borderRadius:"9px",
+            display:"flex", flexDirection:"column-reverse"  }}>
+                
+            
+        <div>
             {messages?
             messages.length>0?
             messages.map((message) => {
@@ -60,11 +73,11 @@ export default function Convo(props){
                         <div style={{margingRight:"0", marginLeft:"auto", position: "relative", 
                                 display:"block", marginTop:"5px", width:"max-content"}}>
                         <Card  key={message.msgId} 
-                                sx={{ width: "100%", height:"min-content", 
+                                sx={{ width: "100%",  maxWidth:"50vw",height:"min-content", 
                                      margin:"3px", borderRadius:"1vw", backgroundColor:"#3f6"}}>
                             
                             <CardContent>
-                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", maxLines:"2",
+                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", 
                                             textOverflow:"ellipsis", display:"block", wordWrap:"break-word"}}>
                                 { decryptMsg(message.text, props.pubkeyX, props.pubkeyYodd,message.iv)}
                                 </p>
@@ -77,11 +90,11 @@ export default function Convo(props){
                         <div style={{ margingRight:"30%", marginLeft:"0", position: "relative", 
                                     display:"block", marginTop:"10px", width:"max-content"}}>
                         <Card  key={message.msgId} 
-                                sx={{ width: "100%", height:"min-content",
+                                sx={{ width: "100%", maxWidth:"50vw", height:"min-content",
                                      margin:"3px", borderRadius:"1vw", backgroundColor:"#ccc"}}>
                             
                             <CardContent>
-                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", maxLines:"2",
+                                <p style={{color:"#aaa", fontSize:"small", overflow:"hidden", 
                                             textOverflow:"ellipsis", display:"block", wordWrap:"break-word"}}>
                                 {message.text}
                                 </p>
@@ -93,8 +106,10 @@ export default function Convo(props){
                 
             }):
             <p>No messages</p>:<p>No messages</p>}
-
+            </div>
+            
         </Box>
+        </div>
     )
 
 }

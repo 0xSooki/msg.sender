@@ -14,6 +14,11 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { useProvider, useSigner, useContract } from 'wagmi'
 
+
+//import { createClient, Provider } from 'urql'
+//import { graphExchange } from '@graphprotocol/client-urql'
+//import * as GraphClient from '../.graphclient'
+
 const contractABI = require("./abi/SenderMessage.json");
 
 
@@ -36,6 +41,12 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
   link: link
 })
+
+
+// const clientUrql = createClient({
+//   url: 'https://api.thegraph.com/subgraphs/name/oscarsernarosero/msgsender',
+// //  exchanges: [graphExchange(GraphClient)],
+// })
 
 
 function App(props) {
@@ -94,8 +105,9 @@ console.log(messageABI.current)
   return (
     <div>
       <ApolloProvider client={client}>
+      {/* <Provider value={clientUrql}> */}
       <HashRouter>
-      <Header />
+      <Header privKey={privKey} />
         <Routes>
           <Route exact path="/" 
                  element={ 
@@ -119,6 +131,7 @@ console.log(messageABI.current)
         </Routes>
         <Footer />
       </HashRouter>
+      {/* </Provider> */}
       </ApolloProvider>
     </div>
   );

@@ -13,16 +13,20 @@ export default function Footer(props){
                         <h5>Navigation Links</h5>
                         <div>
                             <nav className="mainnav">
-                            <Button color="primary">
+                            <div>
+                            <Button color="info">
                             <NavLink activeClassName="activeLink" to="/">
                             Home
                             </NavLink>
                             </Button>
-                            <Button color="primary">
+                            </div>
+                            <div>
+                            <Button color="info">
                             <NavLink activeClassName="activeLink" to="/send-message">
                             Send Message
                             </NavLink>
                             </Button>
+                            </div>
                             </nav>
                         </div>
                     </div>

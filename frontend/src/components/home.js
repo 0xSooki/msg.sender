@@ -8,15 +8,26 @@ import Convo from "./Convo";
 import MessageInput from "./MessageInput";
 import  {decrypt}  from "../logic/Ecnryption"
 import Button from '@mui/material/Button';
-import {useLazyQuery, useQuery} from "@apollo/client";
+import {useLazyQuery} from "@apollo/client";
+import { useQuery } from 'urql'
+import { useContract } from 'wagmi'
+import GetPublicKeyModal from "./GetPublicKeyModal";
 
 import { SYNC_MY_MESSAGES, LISTEN_TO_NEW_MESSAGES } from "../GraphQl/Queries";
 
 const CONTRACT_CREATION_BLOCK = 27986896;
 const crypto = require('crypto-browserify');
+const contractABI = require("../abi/SenderMessage.json");
 
 
 export default function Home(props) {
+
+  const [result, reexecuteQuery] = useQuery({
+    query: LISTEN_TO_NEW_MESSAGES,
+    variables: {user: props.myAddress.toLowerCase(), last: 10},
+  })
+
+  
   const navigate = useNavigate();
   const [myMessages, setMyMessages] = useState([]);
   const [convos, setConvos] = useState({});
@@ -25,17 +36,22 @@ export default function Home(props) {
   const [bobsPubKeyX, setPubKeyX] = useState(null);
   const [bobsPubKeyYodd, setPubKeyYodd] = useState(null);
   const [synced, setSynced] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+      setOpen(false);
+  }
+  const messageABI = useRef(useContract({
+    addressOrName: '0x270b80292699c68D060F5ffECCC099B78465a3F3',
+    contractInterface: contractABI.abi,
+    signerOrProvider:props.signer}));
+  //const { liveData, liveLoading, liveError } = result
 
-  
-  // if(query){}
-  // const [liveMessages, {liveLoading, liveError, liveData }] = useQuery(query);
-  console.log("myAddress props:", props.myAddress)
-  const {liveLoading, liveError, liveData } = useQuery(LISTEN_TO_NEW_MESSAGES,{variables: {user: props.myAddress.toLowerCase(), pollInterval: 4500,}} );
+  // console.log("LIVE data:", result.data);
+  // console.log("LIVE liveError:", result.error);
+  // console.log("LIVE liveLoading:", result.fetching);
+  // console.log(result);
 
-  console.log("LIVE data:", liveData);
-  console.log("LIVE liveError:", liveError);
-  console.log("LIVE liveLoading:", liveLoading);
-  
   useEffect(() => {
     console.log("From GraphQL:",data, loading, error)
     const abortController = new AbortController()
@@ -49,13 +65,13 @@ export default function Home(props) {
     if (!loading && data && !synced){
       syncWithTheGraph();
     }
-    //startListening();
-    listenWithTheGraph();
+    startListening();
+    //listenWithTheGraph();
     
     return function cleanup(){
       abortController.abort()
     }
-  }, [props.messageABI.current, props.signer, loading, convos, liveData]);
+  }, [props.signer, loading, convos]);
 
 
   const decryptMsg = (cipherText, _alicePubKeyX, alicePibKeyYodd, __iv) => {
@@ -85,19 +101,35 @@ export default function Home(props) {
 
   //@deprecated
   const startListening = async () => {
-    if (props.messageABI.current !== null) {
-      if (props.messageABI.current.signer !== null) {
+    if (messageABI.current !== null) {
+      if (messageABI.current.signer !== null) {
         // await new Promise((r) => setTimeout(r, 1000));
-        props.messageABI.current.removeAllListeners();
-      props.messageABI.current.on(
+        messageABI.current.removeAllListeners();
+      messageABI.current.on(
         "NewMessage",
         (from, to, msgId, cipherText, pubkeyX, pubkeyYodd, iv, eventSavedOrNft, amount) => {
+          console.log("NewMessage", msgId);
           if (to.toLowerCase() === props.myAddress.toLowerCase() || from.toLowerCase() === props.myAddress.toLowerCase()) {
+            console.log("NewMessage To/From me", msgId);
+            let plainText="";
+            if (props.privKey.length>0 && to.toLowerCase() === props.myAddress.toLowerCase() ){
+              
+              try{
+                    plainText = decryptMsg(cipherText,pubkeyX,
+                    pubkeyYodd, iv )
+                    console.log("plainText",plainText)
+                  }catch{
+                    plainText=hex_to_ascii(cipherText);
+                  }
+                }else{
+                    plainText=cipherText;
+                  
+                }
             let info = {
-              from: from,
-              to: to,
+              from: from.toLowerCase(),
+              to: to.toLowerCase(),
               msgId: msgId,
-              text: cipherText,
+              text: plainText,
               pubkeyX: pubkeyX,
               pubkeyYodd: pubkeyYodd,
               iv: iv,
@@ -135,13 +167,13 @@ export default function Home(props) {
 
   const syncWithTheGraph = async() => {
     let _myMessages = [];
-    console.log("abi",props.messageABI.current)
-    if (props.messageABI.current !== null) {
+    console.log("abi",messageABI.current)
+    if (messageABI.current !== null) {
       while (!data) {
         await new Promise((r) => setTimeout(r, 500));
         console.log("waiting on data")
       }
-      // while (props.messageABI.current.signer === null) {
+      // while (messageABI.current.signer === null) {
       //   await new Promise((r) => setTimeout(r, 500));
       //   console.log("waiting on signer")
       // }
@@ -161,21 +193,19 @@ export default function Home(props) {
         console.log("message",message)
         const cipherText = message.text
         console.log("cipherText",cipherText)
-        let plainText="";
+        let plainText=cipherText;
         if(message.from!==props.myAddress.toLowerCase()){
           try{
             plainText = decryptMsg(cipherText,message.pubkeyX,
             message.pubkeyYodd, message.iv )
             console.log("plainText",plainText)
           }catch{
-            plainText=cipherText;
+            plainText=hex_to_ascii(cipherText);
           }
         }else{
             plainText=cipherText;
           
         }
-        
-        
           let info = {
             from: message.from,
             to: message.to,
@@ -192,7 +222,31 @@ export default function Home(props) {
         return info
       }))
       
-    }
+    }else{
+      
+      finalMessages = sortedMessages.map((message => {
+        let plainText = message.text;
+        if(message.from.toLowerCase()!==props.myAddress.toLowerCase()){
+          plainText = hex_to_ascii(message.text)
+        }else{
+          plainText = message.text
+        }
+        let info = {
+          from: message.from,
+          to: message.to,
+          msgId: message.msgId,
+          text: plainText,
+          pubkeyX: message.pubkeyX,
+          pubkeyYodd: message.pubkeyYodd,
+          iv: message.iv,
+          eventSavedOrNft: message.eventSavedOrNft,
+          amount: message.BigIntamount,
+        };
+      console.log("message",info)
+
+      return info
+    }))
+  }
     setMyMessages(finalMessages);
     let currentConvos = {...convos};
     finalMessages.map(message => {
@@ -216,61 +270,67 @@ export default function Home(props) {
   }
 
   //@deprecated
-  const sync = async () => {
-    let _myMessages = [];
-    if (props.messageABI.current !== null) {
-      while (props.messageABI.current.signer === null) {
-        console.log("waiting");
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      props.messageABI.current.removeAllListeners();
-      console.log("syncing");
-      const lastBlock = await props.provider.getBlock();
-      const lastBlocknumber = lastBlock.number;
-      console.log("lastBlock", lastBlocknumber);
-      let i = lastBlocknumber;
-      while (i > CONTRACT_CREATION_BLOCK) {
-        if (props.messageABI.current.signer !== null) {
-          let end = i - 1000;
-          if (i - 1000 < CONTRACT_CREATION_BLOCK) {
-            end = CONTRACT_CREATION_BLOCK;
-          }
-          const allEvents = await props.messageABI.current.queryFilter(
-            "NewMessage",
-            end,
-            i
-          );
-          console.log(allEvents);
-          let sortedPosts = [...allEvents];
-          sortedPosts.reverse();
-          const filtered = sortedPosts.filter(
-            (_event) =>
-              _event.args[1].toLowerCase() === props.myAddress.toLowerCase()
-          );
-          console.log(filtered);
-          _myMessages = [].concat(_myMessages, filtered);
-          console.log(_myMessages);
-          setMyMessages(_myMessages);
-          i -= 1000;
-        }
-      }
-      startListening();
-      return;
-    }
-  };
+  // const sync = async () => {
+  //   let _myMessages = [];
+  //   if (messageABI.current !== null) {
+  //     while (messageABI.current.signer === null) {
+  //       console.log("waiting");
+  //       await new Promise((r) => setTimeout(r, 500));
+  //     }
+  //     messageABI.current.removeAllListeners();
+  //     console.log("syncing");
+  //     const lastBlock = await props.provider.getBlock();
+  //     const lastBlocknumber = lastBlock.number;
+  //     console.log("lastBlock", lastBlocknumber);
+  //     let i = lastBlocknumber;
+  //     while (i > CONTRACT_CREATION_BLOCK) {
+  //       if (messageABI.current.signer !== null) {
+  //         let end = i - 1000;
+  //         if (i - 1000 < CONTRACT_CREATION_BLOCK) {
+  //           end = CONTRACT_CREATION_BLOCK;
+  //         }
+  //         const allEvents = await messageABI.current.queryFilter(
+  //           "NewMessage",
+  //           end,
+  //           i
+  //         );
+  //         console.log(allEvents);
+  //         let sortedPosts = [...allEvents];
+  //         sortedPosts.reverse();
+  //         const filtered = sortedPosts.filter(
+  //           (_event) =>
+  //             _event.args[1].toLowerCase() === props.myAddress.toLowerCase()
+  //         );
+  //         console.log(filtered);
+  //         _myMessages = [].concat(_myMessages, filtered);
+  //         console.log(_myMessages);
+  //         setMyMessages(_myMessages);
+  //         i -= 1000;
+  //       }
+  //     }
+  //     startListening();
+  //     return;
+  //   }
+  // };
   console.log("convos",convos);
   console.log("selectedConvo",selectedConvo);
   
-  return (
-    
+  return ( 
+  <div className="container">
     <div display="block">
-      <div style={{display:"table", clear:"both", width:"100%"}}>
-        <div style={{float:"left", width: "40%"}}>
-        <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
+      <div className="row">
+        <div className="col-4">
+          <GetPublicKeyModal 
+              open={open} handleClose={handleClose} setSelectedConvo={setSelectedConvo}
+              setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}/>
+          <div>
+          <ConvoList convos={convos} setSelectedConvo={setSelectedConvo}
                     setPubKeyX={setPubKeyX} setPubKeyYodd={setPubKeyYodd}
+                    handleOpen={handleOpen}
               />
-            </div>
-        <div style={{float:"right", width: "60%"}}>
+          </div>
+        </div>
+        <div display="flex" className="col-8">
           <Convo messages={convos[selectedConvo]} myAddress={props.myAddress} 
                 selectedConvo={selectedConvo} pubkeyYodd={bobsPubKeyYodd}
                 pubkeyX={bobsPubKeyX} privKey={props.privKey}/>
@@ -279,9 +339,8 @@ export default function Home(props) {
                         bobsAddress={selectedConvo}/>
         </div>
       </div>
-    <div>
-      {liveData}
-    <Button variant="contained" color="success" sx ={{
+      <div className="container">
+      <Button variant="contained" color="success" sx ={{
             marginLeft:"auto",
              marginRight:"auto",
              marginTop:"auto",
@@ -293,10 +352,9 @@ export default function Home(props) {
             Sync past messages
             </Button>
 
-    <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey) }/>
-   
-
+      <PrivKeyInput setPrivateKey={(_privKey) => props.setPrivateKey(_privKey) }/>
+      </div>
     </div>
-    </div>
+  </div>
   );
 }
